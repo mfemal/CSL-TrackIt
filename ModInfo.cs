@@ -1,6 +1,6 @@
 ﻿using ColossalFramework;
 using ICities;
-using UnityEngine;
+using CitiesHarmony.API;
 
 namespace CargoInfoMod
 {
@@ -34,6 +34,19 @@ namespace CargoInfoMod
             //helper.AddSpace(10);
             settingsGroup.AddButton("Clean old data", () => { data.RemoveData(Namespace); });
             settingsGroup.AddButton("Clean current data", () => { data.RemoveData(NamespaceV1); CleanCurrentData = true; });
+        }
+
+        public void OnEnabled()
+        {
+            HarmonyHelper.DoOnHarmonyReady(() => Patcher.PatchAll());
+        }
+
+        public void OnDisabled()
+        {
+            if (HarmonyHelper.IsHarmonyInstalled)
+            {
+                Patcher.UnpatchAll();
+            }
         }
     }
 

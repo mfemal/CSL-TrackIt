@@ -34,8 +34,6 @@ namespace CargoInfoMod
             }
             LoadingManager.instance.m_levelLoaded += OnLevelLoaded;
             LoadingManager.instance.m_levelPreUnloaded += OnLevelUnloaded;
-
-            HarmonyDetours.Apply();
         }
 
         private MouseEventHandler showDelegate;
