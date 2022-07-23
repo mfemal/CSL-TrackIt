@@ -28,7 +28,7 @@ namespace CargoInfoMod
             {
                 // Mod reloaded while running the game, should set up again
 #if DEBUG
-                Debug.Log("ThreadingExtension created while running");
+                LogUtil.LogInfo("ThreadingExtension created while running");
 #endif
                 OnLevelLoaded(SimulationManager.UpdateMode.LoadGame);
             }
@@ -62,7 +62,7 @@ namespace CargoInfoMod
         private void OnLevelUnloaded()
         {
 #if DEBUG
-            Debug.Log("Cleaning up UI...");
+            LogUtil.LogInfo("Cleaning up UI...");
 #endif
             //if (statsLabel != null)
             //    statsLabel.eventClicked -= showDelegate;
@@ -77,7 +77,7 @@ namespace CargoInfoMod
         private void SetupUIBindings()
         {
 #if DEBUG
-            Debug.Log("Setting up UI...");
+            LogUtil.LogInfo("Setting up UI...");
 #endif
             cargoPanel = (CargoUIPanel)UIView.GetAView().AddUIComponent(typeof(CargoUIPanel));
 
@@ -87,18 +87,14 @@ namespace CargoInfoMod
             statsLabel = servicePanel?.Find<UILabel>("Desc");
             rightPanel = servicePanel?.Find<UIPanel>("Right");
             if (servicePanel == null)
-                Debug.LogError("CityServiceWorldInfoPanel not found");
-            //if (statsPanel == null)
-            //    Debug.LogError("DescPanel not found");
+                LogUtil.LogError("CityServiceWorldInfoPanel not found");
             //if (statsLabel == null)
             if (rightPanel == null)
-                //Debug.LogError("DescPanel.Desc label not found");
-                Debug.LogError("ServicePanel.Right panel not found");
+                LogUtil.LogError("ServicePanel.Right panel not found");
             else
             {
-                //Debug.Log("Service stats label found!");
 #if DEBUG
-                Debug.Log("ServicePanel.Right panel found!");
+                LogUtil.LogInfo("ServicePanel.Right panel found!");
 #endif
                 showDelegate = (sender, e) =>
                 {
@@ -124,7 +120,7 @@ namespace CargoInfoMod
             }
             else
             {
-                Debug.LogError("CityServiceVehicleWorldInfoPanel not found!");
+                LogUtil.LogError("CityServiceVehicleWorldInfoPanel not found!");
             }
         }
 
@@ -139,7 +135,7 @@ namespace CargoInfoMod
                 lastReset = tempDateTime;
                 mod.data.UpdateCounters();
 #if DEBUG
-                Debug.Log("Monthly counter values updated");
+                LogUtil.LogInfo("Monthly counter values updated");
 #endif
             }
 
@@ -166,7 +162,7 @@ namespace CargoInfoMod
                     vehicleID = VehicleManager.instance.m_vehicles.m_buffer[vehicleID].m_leadingVehicle;
                     if (guard > ushort.MaxValue)
                     {
-                        Debug.LogError("Invalid list detected!");
+                        LogUtil.LogError("Invalid list detected!");
                         return;
                     }
                 }
@@ -188,7 +184,7 @@ namespace CargoInfoMod
                         guard++;
                         if (guard > ushort.MaxValue)
                         {
-                            Debug.LogError("Invalid list detected!");
+                            LogUtil.LogError("Invalid list detected!");
                             return;
                         }
                     }

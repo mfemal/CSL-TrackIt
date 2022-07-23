@@ -22,7 +22,7 @@ namespace CargoInfoMod
                     var rows = line.Split('\t');
                     if (rows.Length < 2)
                     {
-                        Debug.LogErrorFormat("Not enough tabs in locale string from {0}:\n'{1}'", file, line);
+                        LogUtil.LogError($"Not enough tabs in locale string from {file}: '{line}'");
                         continue;
                     }
                     locale.AddLocalizedString(new Locale.Key { m_Identifier = rows[0] }, rows[1]);

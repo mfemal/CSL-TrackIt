@@ -131,7 +131,8 @@ namespace CargoInfoMod
                     this.flags |= CarFlags.LuxuryProducts;
                     break;
                 default:
-                    Debug.LogErrorFormat("Unexpected transfer type: {0}", Enum.GetName(typeof(TransferType), transferType));
+                    string transferTypeName = Enum.GetName(typeof(TransferType), transferType);
+                    LogUtil.LogError($"Unexpected transfer type: {transferTypeName}");
                     break;
             }
         }
@@ -169,19 +170,19 @@ namespace CargoInfoMod
                 mod.data = this;
             }
             else
-                Debug.LogError("Could not find parent IUserMod!");
+                LogUtil.LogError("Could not find parent IUserMod!");
         }
 
         public override void OnLoadData()
         {
 #if DEBUG
-            Debug.Log("Restoring previous data...");
+            LogUtil.LogInfo("Restoring previous data...");
 #endif
             var data = serializableDataManager.LoadData(ModInfo.NamespaceV1);
             if (data == null)
             {
 #if DEBUG
-                Debug.Log("No previous data found");
+                LogUtil.LogInfo("No previous data found");
 #endif
                 return;
             }
@@ -208,28 +209,28 @@ namespace CargoInfoMod
                 if (indexData is Dictionary<ushort, CargoStats2>)
                 {
 #if DEBUG
-                    Debug.Log("Loaded v2 data");
+                    LogUtil.LogInfo("Loaded v2 data");
 #endif
                     cargoStatIndex = (Dictionary<ushort, CargoStats2>)indexData;
                 }
 #if DEBUG
                 else
-                    Debug.Log("Unknown data format");
+                    LogUtil.LogInfo("Unknown data format");
 #endif
             }
             catch (SerializationException e)
             {
-                Debug.LogErrorFormat("While trying to load data: {0}", e.ToString());
+                LogUtil.LogException(e);
             }
 #if DEBUG
-            Debug.LogFormat("Loaded stats for {0} stations", cargoStatIndex.Count);
+            LogUtil.LogInfo($"Loaded stats for {cargoStatIndex.Count} stations");
 #endif
         }
 
         public void Setup()
         {
 #if DEBUG
-            Debug.Log("Looking up cargo station prefabs...");
+            LogUtil.LogInfo("Looking up cargo station prefabs...");
 #endif
             cargoStations.Clear();
             for (uint i = 0; i < PrefabCollection<BuildingInfo>.LoadedCount(); i++)
@@ -237,19 +238,19 @@ namespace CargoInfoMod
                 var prefab = PrefabCollection<BuildingInfo>.GetLoaded(i);
                 if (prefab == null)
                 {
-                    Debug.LogWarningFormat("Uninitialized building prefab #{0}! (this should not happen)", i);
+                    LogUtil.LogWarning($"Uninitialized building prefab #{i}! (this should not happen)");
                     continue;
                 }
                 if (prefab.m_buildingAI is CargoStationAI)
                 {
 #if DEBUG
-                    Debug.LogFormat("Cargo station prefab found: {0}", prefab.name);
+                    LogUtil.LogInfo($"Cargo station prefab found: {prefab.name}");
 #endif
                     cargoStations.Add(prefab.m_prefabDataIndex);
                 }
             }
 #if DEBUG
-            Debug.LogFormat("Found {0} cargo station prefabs", cargoStations.Count);
+            LogUtil.LogInfo($"Found {cargoStations.Count} cargo station prefabs");
 #endif
             for (ushort i = 0; i < BuildingManager.instance.m_buildings.m_size; i++)
             {
@@ -263,7 +264,7 @@ namespace CargoInfoMod
         public override void OnSaveData()
         {
 #if DEBUG
-            Debug.Log("Saving data...");
+            LogUtil.LogInfo("Saving data...");
 #endif
             if (ModInfo.CleanCurrentData) return;
 
@@ -274,27 +275,27 @@ namespace CargoInfoMod
                 binaryFormatter.Serialize(ms, cargoStatIndex);
                 serializableDataManager.SaveData(ModInfo.NamespaceV1, ms.ToArray());
 #if DEBUG
-                Debug.LogFormat("Saved stats for {0} stations", cargoStatIndex.Count);
+                LogUtil.LogInfo($"Saved stats for {cargoStatIndex.Count} stations");
 #endif
             }
             catch (SerializationException e)
             {
-                Debug.LogError("While serializing data: " + e.Message);
+                LogUtil.LogException(e);
             }
         }
 
         public void RemoveData(string dataID)
         {
-            if(SimulationManager.instance.m_serializableDataStorage.ContainsKey(dataID))
+            if (SimulationManager.instance.m_serializableDataStorage.ContainsKey(dataID))
             {
                 SimulationManager.instance.m_SerializableDataWrapper.EraseData(dataID);
 #if DEBUG
-                Debug.LogFormat("'{0}' data removed from savegame file", dataID);
+                LogUtil.LogInfo($"'{dataID}' data removed from savegame file");
 #endif
             }
 #if DEBUG
             else
-                Debug.LogFormat("'{0}' data not present in savegame file", dataID);
+                LogUtil.LogInfo($"'{dataID}' data not present in savegame file");
 #endif
         }
 
@@ -307,7 +308,7 @@ namespace CargoInfoMod
                 // Restoring previous values of truck statistics
                 cargoStatIndex.Add(buildingID, new CargoStats2());
 #if DEBUG
-                Debug.LogFormat("Cargo station added to index: {0}", buildingName);
+                LogUtil.LogInfo($"Cargo station buildingID:{buildingID} buildingName:{buildingName} added to index");
 #endif
             }
         }
@@ -319,7 +320,7 @@ namespace CargoInfoMod
                 var buildingName = BuildingManager.instance.GetBuildingName(buildingID, InstanceID.Empty);
                 cargoStatIndex.Remove(buildingID);
 #if DEBUG
-                Debug.LogFormat("Cargo station removed from index: {0}", buildingName);
+                LogUtil.LogInfo($"Cargo station buildingID:{buildingID} buildingName:{buildingName} removed from index");
 #endif
             }
         }
