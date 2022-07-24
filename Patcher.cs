@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Reflection;
 using UnityEngine;
-using ColossalFramework.Plugins;
-using ColossalFramework.UI;
-using ICities;
 using HarmonyLib;
 
 namespace CargoInfoMod
 {
+    // Class and methods must be static
     public static class Patcher
     {
         private const string HarmonyId = "yourname.CargoInfoMod";
@@ -48,29 +43,50 @@ namespace CargoInfoMod
         }
     }
 
+    /// <summary>
+    /// Via Harmony, track outbound (sent) cargo resource transfers in the CargoTruckAI.
+    /// </summary>
     [HarmonyPatch(typeof(CargoTruckAI), nameof(CargoTruckAI.SetSource))]
     public static class CargoTruckAISetSourcePatch
     {
+
+        /// <summary>
+        /// Called by the CitiesHarmony wrapper (boformer).
+        /// </summary>
+        /// <param name="vehicleID">Vehicle ID.</param>
+        /// <param name="data">Vehicle data.</param>
+        /// <param name="sourceBuilding">Source building ID for the transfer.</param>
         public static void Postfix(ushort vehicleID, ref Vehicle data, ushort sourceBuilding)
         {
             var parcel = new CargoParcel(sourceBuilding, false, data.m_transferType, data.m_transferSize, data.m_flags);
-            CargoData.Instance.Count(parcel);
+            CargoData.Instance.TrackIt(parcel);
 #if DEBUG
             LogUtil.LogInfo($"SetSource Postfix vehicleID: {vehicleID} sourceBuilding: {sourceBuilding}");
 #endif
         }
     }
 
+    /// <summary>
+    /// Via Harmony, track inbound (received) cargo resource transfers in the CargoTruckAI.
+    /// </summary>
     [HarmonyPatch(typeof(CargoTruckAI))]
     [HarmonyPatch(nameof(CargoTruckAI.ChangeVehicleType))]
     [HarmonyPatch(
         new Type[] { typeof(VehicleInfo), typeof(ushort), typeof(Vehicle), typeof(PathUnit.Position), typeof(uint)},
         new ArgumentType[] { ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Ref, ArgumentType.Normal, ArgumentType.Normal })]
-    public static class CargoTruckAIChangeVehicleType
+    public static class CargoTruckAIChangeVehicleTypePatch
     {
         // Custom state between Prefix and Postfix, must use static var (see: https://harmony.pardeike.net/articles/patching.html)
         private static CargoParcel? s_cargoParcel;
 
+        /// <summary>
+        /// Called by the CitiesHarmony wrapper (boformer). The data for this transfer is tracked so it can be recorded in Postfix.
+        /// </summary>
+        /// <param name="vehicleInfo">Vehicle info reference.</param>
+        /// <param name="vehicleID">Vehicle ID</param>
+        /// <param name="vehicleData">Vehicle data</param>
+        /// <param name="pathPos">Its position in the transfer path.</param>
+        /// <param name="laneID">The lane ID.</param>
         public static void Prefix(ref VehicleInfo vehicleInfo, ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position pathPos, uint laneID)
         {
             if ((vehicleData.m_flags & (Vehicle.Flags.TransferToSource | Vehicle.Flags.GoingBack)) != 0)
@@ -85,14 +101,22 @@ namespace CargoInfoMod
             s_cargoParcel = new CargoParcel(buildingID, true, vehicleData.m_transferType, vehicleData.m_transferSize, vehicleData.m_flags);
         }
 
+        /// <summary>
+        /// Track the data transferred internally. This is done conditionally based on checks in Prefix.
+        /// </summary>
+        /// <param name="vehicleInfo">Vehicle info reference.</param>
+        /// <param name="vehicleID">Vehicle ID</param>
+        /// <param name="vehicleData">Vehicle data</param>
+        /// <param name="pathPos">Its position in the transfer path.</param>
+        /// <param name="laneID">The lane ID.</param>
         public static void Postfix(ref VehicleInfo vehicleInfo, ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position pathPos, uint laneID)
         {
-            if (!s_cargoParcel.HasValue)
+            if (!s_cargoParcel.HasValue) // check if ignored (not set) in Prefix due to boundary conditions
             {
                 return;
             }
             var parcel = (CargoParcel)s_cargoParcel;
-            CargoData.Instance.Count(parcel);
+            CargoData.Instance.TrackIt(parcel);
 #if DEBUG
             LogUtil.LogInfo($"ChangeVehicleType Postfix vehicleID: {vehicleID} sourceBuilding: {parcel.building}");
 #endif

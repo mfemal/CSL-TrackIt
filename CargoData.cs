@@ -347,11 +347,20 @@ namespace CargoInfoMod
             return cargoStatIndex.TryGetValue(building, out stats);
         }
 
-        public void Count(CargoParcel cargo)
+        /// <summary>
+        /// Track the inbound cargo data transfer. If for some reason the building cannot be found internally, it is ignored.
+        /// When buildings are added or removed within the game, this mod's listeners will normally update internal data
+        /// structures appropriately.
+        /// </summary>
+        /// <param name="cargo">Cargo data transferred. If the building is not set (0), or no data is transferred it is ignored.</param>
+        public void TrackIt(CargoParcel cargo)
         {
             if (cargo.building == 0 ||
+                cargo.transferSize == 0 ||
                 !(BuildingManager.instance.m_buildings.m_buffer[cargo.building].Info.m_buildingAI is CargoStationAI))
+            {
                 return;
+            }
 
             if (cargoStatIndex.TryGetValue(cargo.building, out CargoStats2 stats))
             {

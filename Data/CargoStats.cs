@@ -162,18 +162,18 @@ namespace CargoInfoMod.Data
         /// <summary>
         /// List of resources sent by an entity.
         /// </summary>
-        private static List<TrackedResource> s_resourcesSent = new List<TrackedResource>();
+        private List<TrackedResource> s_resourcesSent = new List<TrackedResource>();
 
         // Object lock for concurrent reading and writing to s_resourcesSent
-        private static object s_resourcesSentLock = new object();
+        private object s_resourcesSentLock = new object();
 
         /// <summary>
         /// List of resources received by an entity.
         /// </summary>
-        private static List<TrackedResource> s_resourcesReceived = new List<TrackedResource>();
+        private List<TrackedResource> s_resourcesReceived = new List<TrackedResource>();
 
         // Object lock for concurrent reading and writing to s_resourcesReceived
-        private static object s_resourcesReceivedLock = new object();
+        private object s_resourcesReceivedLock = new object();
 
         public CargoStats2()
         {
