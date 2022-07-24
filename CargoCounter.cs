@@ -223,12 +223,12 @@ namespace CargoInfoMod
                     sb.AppendFormat(
                         "{0}: {1:0}",
                         Localization.Get(mod.Options.UseMonthlyValues ? "TRUCKS_RCVD_LAST_MONTH" : "TRUCKS_RCVD_LAST_WEEK"),
-                        receivedAmount);
+                        stats.CountResourcesReceived());
                     sb.AppendLine();
                     sb.AppendFormat(
                         "{0}: {1:0}",
                         Localization.Get(mod.Options.UseMonthlyValues ? "TRUCKS_SENT_LAST_MONTH" : "TRUCKS_SENT_LAST_WEEK"),
-                        sentAmount);
+                        stats.CountResourcesSent());
                     sb.AppendLine();
                     sb.Append(Localization.Get("CLICK_MORE"));
                     statsLabel.text = sb.ToString();

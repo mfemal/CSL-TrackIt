@@ -19,6 +19,8 @@ namespace CargoInfoMod
         public ushort building;
         public ushort transferSize;
         public CarFlags flags;
+        internal byte transferType;
+
         public int ResourceType => ((flags & CarFlags.Resource) - CarFlags.Oil) / 0x10;
 
         public static readonly CarFlags[] ResourceTypes =
@@ -50,6 +52,7 @@ namespace CargoInfoMod
 
         public CargoParcel(ushort buildingID, bool incoming, byte transferType, ushort transferSize, Vehicle.Flags flags)
         {
+            this.transferType = transferType;
             this.transferSize = transferSize;
             this.building = buildingID;
             this.flags = incoming ? CarFlags.None : CarFlags.Sent;
@@ -351,7 +354,116 @@ namespace CargoInfoMod
                 return;
 
             if (cargoStatIndex.TryGetValue(cargo.building, out CargoStats2 stats))
+            {
                 stats.CarsCounted[(int)cargo.flags] += cargo.transferSize;
+
+                ResourceDestinationType resourceDestinationType =
+                    (cargo.flags & CarFlags.Imported) != 0 ? ResourceDestinationType.Import :
+                    (cargo.flags & CarFlags.Exported) != 0 ? ResourceDestinationType.Export :
+                    ResourceDestinationType.Local;
+                DateTime ts = SimulationManager.instance.m_currentGameTime.Date; // Ignore the time component
+                if ((cargo.flags & CarFlags.Sent) != 0)
+                {
+                    stats.TrackResourceSent(ts, resourceDestinationType, convertTransferType(cargo.transferType), cargo.transferSize);
+                }
+                else
+                {
+                    stats.TrackResourceReceived(ts, resourceDestinationType, convertTransferType(cargo.transferType), cargo.transferSize);
+                }
+            }
+
+#if DEBUG
+            LogUtil.LogInfo($"Updated building: {cargo.building} stats: {{ {stats} }}");
+#endif
+        }
+
+        /// <summary>
+        /// Translate the game representation for the transfer type to the internal module version.
+        /// </summary>
+        /// <param name="transferType">The TransferManager.TransferReason byte value</param>
+        /// <returns>Mod resource type to include 'None' if a valid cannot be determined from transferType</returns>
+        private ResourceType convertTransferType(byte transferType)
+        {
+            ResourceType resourceType;
+
+            switch ((TransferType)transferType)
+            {
+                case TransferType.Oil:
+                    resourceType = ResourceType.Oil;
+                    break;
+                case TransferType.Ore:
+                    resourceType = ResourceType.Ore;
+                    break;
+                case TransferType.Logs:
+                    resourceType = ResourceType.Logs;
+                    break;
+                case TransferType.Grain:
+                    resourceType = ResourceType.Grain;
+                    break;
+                case TransferType.Petrol:
+                    resourceType = ResourceType.Petrol;
+                    break;
+                case TransferType.Coal:
+                    resourceType = ResourceType.Coal;
+                    break;
+                case TransferType.Lumber:
+                    resourceType = ResourceType.Lumber;
+                    break;
+                case TransferType.Food:
+                    resourceType = ResourceType.Food;
+                    break;
+                case TransferType.Goods:
+                    resourceType = ResourceType.Goods;
+                    break;
+                case TransferType.Mail:
+                    resourceType = ResourceType.Mail;
+                    break;
+                case TransferType.UnsortedMail:
+                    resourceType = ResourceType.UnsortedMail;
+                    break;
+                case TransferType.SortedMail:
+                    resourceType = ResourceType.SortedMail;
+                    break;
+                case TransferType.OutgoingMail:
+                    resourceType = ResourceType.OutgoingMail;
+                    break;
+                case TransferType.IncomingMail:
+                    resourceType = ResourceType.IncomingMail;
+                    break;
+                case TransferType.AnimalProducts:
+                    resourceType = ResourceType.AnimalProducts;
+                    break;
+                case TransferType.Flours:
+                    resourceType = ResourceType.Flours;
+                    break;
+                case TransferType.Paper:
+                    resourceType = ResourceType.Paper;
+                    break;
+                case TransferType.PlanedTimber:
+                    resourceType = ResourceType.PlanedTimber;
+                    break;
+                case TransferType.Petroleum:
+                    resourceType = ResourceType.Petroleum;
+                    break;
+                case TransferType.Plastics:
+                    resourceType = ResourceType.Plastics;
+                    break;
+                case TransferType.Glass:
+                    resourceType = ResourceType.Glass;
+                    break;
+                case TransferType.Metals:
+                    resourceType = ResourceType.Metals;
+                    break;
+                case TransferType.LuxuryProducts:
+                    resourceType = ResourceType.LuxuryProducts;
+                    break;
+                default:
+                    string transferTypeName = Enum.GetName(typeof(TransferType), transferType);
+                    LogUtil.LogWarning($"Unexpected transfer type: {transferTypeName}, cannot convert resource type.");
+                    resourceType = ResourceType.None;
+                    break;
+            }
+            return resourceType;
         }
     }
 }
