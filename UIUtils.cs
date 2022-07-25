@@ -4,9 +4,8 @@ using UnityEngine;
 
 namespace CargoInfoMod
 {
-    // Follow convention in other mods of separating creation of UI component creation for potential re-use. Some of these
-    // methods taken from boformer in the Building Themes mod; although source credits were missing if their origination
-    // is incorrect.
+    // Some Create methods are re-used or modified from the Building Themes mod (boformer); although some credits were
+    // also noted in that mod to SamSamTS and AcidFire.
     internal class UIUtils
     {
         public static UIButton CreateButton(UIComponent parent)
@@ -25,6 +24,12 @@ namespace CargoInfoMod
             return button;
         }
 
+        /// <summary>
+        /// Create a resource radial chart whose slices are depicted in the same manner as Outside Connections.
+        /// </summary>
+        /// <param name="parent">Parent component name to attach to.</param>
+        /// <param name="name">Name of the UI component, useful for browsing the scene in the explorer.</param>
+        /// <returns></returns>
         public static UICargoChart CreateResourceRadialChart(UIComponent parent, string name)
         {
             UICargoChart cargoChart = parent.AddUIComponent<UICargoChart>();
@@ -53,7 +58,8 @@ namespace CargoInfoMod
 
         /// <summary>
         /// Get the resource color for the resource tracked category type. These are the same colors used for import and export.
-        /// Original concept for this in EOCV from rcav8tr (Extended Outside Connections View).
+        /// Original concept for this in EOCV from rcav8tr (Extended Outside Connections View) although this is adapted appropriately
+        /// for usage in this mod.
         /// </summary>
         public static Color GetResourceCategoryColor(ResourceCategoryType type)
         {

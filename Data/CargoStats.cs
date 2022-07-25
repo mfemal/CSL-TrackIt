@@ -88,12 +88,12 @@ namespace CargoInfoMod.Data
         /// <summary>
         /// Game timestamp for a resource. This could change based on whether a resource is sent or received based on its state.
         /// </summary>
-        public DateTime ts;
+        public DateTime _ts;
 
-        internal ResourceDestinationType resourceDestinationType;
-        internal ResourceCategoryType resourceCategoryType;
-        internal ResourceType resourceType;
-        internal int amount;
+        internal ResourceDestinationType _resourceDestinationType;
+        internal ResourceCategoryType _resourceCategoryType;
+        internal ResourceType _resourceType;
+        internal int _amount;
 
         /// <summary>
         /// Create an instance of a tracked cargo resource.
@@ -104,12 +104,12 @@ namespace CargoInfoMod.Data
         /// <param name="amount">The amount of resource sent or received.</param>
         public TrackedResource(DateTime ts, ResourceDestinationType resourceDestinationType, ResourceType resourceType, int amount)
         {
-            this.resourceDestinationType = resourceDestinationType;
-            this.resourceType = resourceType;
-            this.amount = amount;
-            this.ts = ts;
+            _resourceDestinationType = resourceDestinationType;
+            _resourceType = resourceType;
+            _amount = amount;
+            _ts = ts;
 
-            resourceCategoryType = resourceType.InferResourceCategoryType();
+            _resourceCategoryType = resourceType.InferResourceCategoryType();
         }
     }
 
@@ -209,54 +209,54 @@ namespace CargoInfoMod.Data
 
         public int TotalResourcesSent()
         {
-            return createSnapshot(s_resourcesSentLock, s_resourcesSent).Sum(t => t.amount);
+            return createResourceSnapshot(s_resourcesSentLock, s_resourcesSent).Sum(t => t._amount);
         }
 
         public int TotalResourcesSent(ResourceCategoryType resourceCategoryType)
         {
-            return createSnapshot(s_resourcesSentLock, s_resourcesSent)
-                .Where(t => t.resourceCategoryType == resourceCategoryType)
-                .Sum(t => t.amount);
+            return createResourceSnapshot(s_resourcesSentLock, s_resourcesSent)
+                .Where(t => t._resourceCategoryType == resourceCategoryType)
+                .Sum(t => t._amount);
         }
 
         public int TotalResourcesSent(ResourceDestinationType resourceDestinationType)
         {
-            return createSnapshot(s_resourcesSentLock, s_resourcesSent)
-                .Where(t => t.resourceDestinationType == resourceDestinationType)
-                .Sum(t => t.amount);
+            return createResourceSnapshot(s_resourcesSentLock, s_resourcesSent)
+                .Where(t => t._resourceDestinationType == resourceDestinationType)
+                .Sum(t => t._amount);
         }
 
         public int TotalResourcesSent(ResourceCategoryType resourceCategoryType, ResourceDestinationType resourceDestinationType)
         {
-            return createSnapshot(s_resourcesSentLock, s_resourcesSent)
-                .Where(t => t.resourceCategoryType == resourceCategoryType && t.resourceDestinationType == resourceDestinationType)
-                .Sum(t => t.amount);
+            return createResourceSnapshot(s_resourcesSentLock, s_resourcesSent)
+                .Where(t => t._resourceCategoryType == resourceCategoryType && t._resourceDestinationType == resourceDestinationType)
+                .Sum(t => t._amount);
         }
 
         public int TotalResourcesReceived()
         {
-            return createSnapshot(s_resourcesReceivedLock, s_resourcesReceived).Sum(t => t.amount);
+            return createResourceSnapshot(s_resourcesReceivedLock, s_resourcesReceived).Sum(t => t._amount);
         }
 
         public int TotalResourcesReceived(ResourceCategoryType resourceCategoryType)
         {
-            return createSnapshot(s_resourcesReceivedLock, s_resourcesReceived)
-                .Where(t => t.resourceCategoryType == resourceCategoryType)
-                .Sum(t => t.amount);
+            return createResourceSnapshot(s_resourcesReceivedLock, s_resourcesReceived)
+                .Where(t => t._resourceCategoryType == resourceCategoryType)
+                .Sum(t => t._amount);
         }
 
         public int TotalResourcesReceived(ResourceDestinationType resourceDestinationType)
         {
-            return createSnapshot(s_resourcesReceivedLock, s_resourcesReceived)
-                .Where(t => t.resourceDestinationType == resourceDestinationType)
-                .Sum(t => t.amount);
+            return createResourceSnapshot(s_resourcesReceivedLock, s_resourcesReceived)
+                .Where(t => t._resourceDestinationType == resourceDestinationType)
+                .Sum(t => t._amount);
         }
 
         public int TotalResourcesReceived(ResourceCategoryType resourceCategoryType, ResourceDestinationType resourceDestinationType)
         {
-            return createSnapshot(s_resourcesReceivedLock , s_resourcesReceived)
-                .Where(t => t.resourceCategoryType == resourceCategoryType && t.resourceDestinationType == resourceDestinationType)
-                .Sum(t => t.amount);
+            return createResourceSnapshot(s_resourcesReceivedLock , s_resourcesReceived)
+                .Where(t => t._resourceCategoryType == resourceCategoryType && t._resourceDestinationType == resourceDestinationType)
+                .Sum(t => t._amount);
         }
 
         /// <summary>
@@ -266,7 +266,7 @@ namespace CargoInfoMod.Data
         /// <param name="o">Object lock, must be non-null.</param>
         /// <param name="list">Source list to create a snapshot of.</param>
         /// <returns>New list containing references to the copied tracked values.</returns>
-        private List<TrackedResource> createSnapshot(object o, List<TrackedResource> list)
+        private List<TrackedResource> createResourceSnapshot(object o, List<TrackedResource> list)
         {
             if (list == null)
             {
@@ -276,8 +276,7 @@ namespace CargoInfoMod.Data
             List<TrackedResource> l = null;
             lock (o)
             {
-                l = new List<TrackedResource>(list.Count);
-                list.ForEach(t => l.Add(t));
+                l = list.Where(r => r._resourceType != ResourceType.None).ToList();
             }
             return l;
         }
