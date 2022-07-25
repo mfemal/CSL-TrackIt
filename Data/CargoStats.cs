@@ -23,7 +23,8 @@ namespace CargoInfoMod.Data
     /// </summary>
     public enum ResourceCategoryType
     {
-        // new DLC or changes in game core data structures?
+        // new DLC or changes in game core data structures? this MUST be the only non-valid special value vs.
+        // actual resource categories in the game to currently avoid changing other code in this module.
         None,
 
         Oil,
@@ -218,6 +219,13 @@ namespace CargoInfoMod.Data
                 .Sum(t => t.amount);
         }
 
+        public int TotalResourcesSent(ResourceDestinationType resourceDestinationType)
+        {
+            return createSnapshot(s_resourcesSentLock, s_resourcesSent)
+                .Where(t => t.resourceDestinationType == resourceDestinationType)
+                .Sum(t => t.amount);
+        }
+
         public int TotalResourcesSent(ResourceCategoryType resourceCategoryType, ResourceDestinationType resourceDestinationType)
         {
             return createSnapshot(s_resourcesSentLock, s_resourcesSent)
@@ -234,6 +242,13 @@ namespace CargoInfoMod.Data
         {
             return createSnapshot(s_resourcesReceivedLock, s_resourcesReceived)
                 .Where(t => t.resourceCategoryType == resourceCategoryType)
+                .Sum(t => t.amount);
+        }
+
+        public int TotalResourcesReceived(ResourceDestinationType resourceDestinationType)
+        {
+            return createSnapshot(s_resourcesReceivedLock, s_resourcesReceived)
+                .Where(t => t.resourceDestinationType == resourceDestinationType)
                 .Sum(t => t.amount);
         }
 

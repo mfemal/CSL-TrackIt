@@ -1,53 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using CargoInfoMod.Data;
 using ColossalFramework.Globalization;
 using ColossalFramework.Plugins;
 using ColossalFramework.UI;
 using UnityEngine;
+using CargoInfoMod.Data;
 
 namespace CargoInfoMod
 {
     class CargoUIPanel : UIPanel
     {
-        private const int Width = 384;
-        private const int HandleHeight = 40;
-        private const int LabelHeight = 20;
-        private const int LabelWidth = 90;
-        private const int StatPanelHeight = 30;
-        private readonly Vector2 ExitButtonSize = new Vector2(32, 32);
-        private readonly Vector2 ModeButtonSize = new Vector2(32, 10);
-        private readonly Vector2 ChartSize = new Vector2(90, 90);
-        private readonly RectOffset Padding = new RectOffset(2, 2, 2, 2);
-        private readonly Color32 CargoUnitColor = new Color32(206, 248, 0, 255);
+        private const int _width = 384;
+        private const int _handleHeight = 40;
+        private readonly Vector2 _labelSize = new Vector2(90, 20);
+        private const int _statPanelHeight = 30;
+        private readonly Vector2 _exitButtonSize = new Vector2(32, 32);
+        private readonly Vector2 _modeButtonSize = new Vector2(32, 10);
+        private readonly Vector2 _chartSize = new Vector2(90, 90);
+        private readonly RectOffset _padding = new RectOffset(2, 2, 2, 2);
+        private readonly Color32 _unitColor = new Color32(206, 248, 0, 255);
 
-        private ModInfo mod;
+        private ModInfo _mod;
 
-        private bool displayCurrent;
-        private ushort lastSelectedBuilding;
+        private bool _displayCurrent;
+        private ushort _lastSelectedBuilding;
+
+        private List<UICargoChart> _charts = new List<UICargoChart>();
+        private List<UILabel> _labels = new List<UILabel>();
+        private UILabel _windowLabel, _localLabel, _importLabel, _exportLabel, _rcvdLabel, _sentLabel;
+        private UIButton _resetButton, _modeButton;
+        private UIPanel _sentPanel, _rcvdPanel;
 
         public CargoUIPanel()
         {
-            mod = PluginManager.instance.FindPluginInfo(Assembly.GetExecutingAssembly()).userModInstance as ModInfo;
+            _mod = PluginManager.instance.FindPluginInfo(Assembly.GetExecutingAssembly()).userModInstance as ModInfo;
         }
-
-        private List<UICargoChart> charts = new List<UICargoChart>();
-        private List<UILabel> labels = new List<UILabel>();
-        private UILabel windowLabel, localLabel, importLabel, exportLabel, rcvdLabel, sentLabel;
-        private UIButton resetButton, modeButton;
-
-        private readonly List<Func<CarFlags, bool>> cargoCategories = new List<Func<CarFlags, bool>>
-        {
-            t => (t & CarFlags.Sent) == 0 && (t & CarFlags.Imported) == 0 && (t & CarFlags.Exported) == 0,
-            t => (t & CarFlags.Sent) == 0 && (t & CarFlags.Imported) != 0 && (t & CarFlags.Exported) == 0,
-            t => (t & CarFlags.Sent) == 0 && (t & CarFlags.Imported) == 0 && (t & CarFlags.Exported) != 0,
-            t => (t & CarFlags.Sent) != 0 && (t & CarFlags.Imported) == 0 && (t & CarFlags.Exported) == 0,
-            t => (t & CarFlags.Sent) != 0 && (t & CarFlags.Imported) != 0 && (t & CarFlags.Exported) == 0,
-            t => (t & CarFlags.Sent) != 0 && (t & CarFlags.Imported) == 0 && (t & CarFlags.Exported) != 0
-        };
-
 
         public override void Awake()
         {
@@ -58,132 +46,112 @@ namespace CargoInfoMod
             autoLayoutDirection = LayoutDirection.Vertical;
 
             var handle = AddUIComponent<UIDragHandle>();
-            handle.size = new Vector2(Width, HandleHeight);
+            handle.size = new Vector2(_width, _handleHeight);
 
-            windowLabel = handle.AddUIComponent<UILabel>();
-            windowLabel.anchor = UIAnchorStyle.CenterVertical | UIAnchorStyle.CenterHorizontal;
+            _windowLabel = handle.AddUIComponent<UILabel>();
+            _windowLabel.anchor = UIAnchorStyle.CenterVertical | UIAnchorStyle.CenterHorizontal;
 
-            var closeButton = handle.AddUIComponent<UIButton>();
-            closeButton.size = ExitButtonSize;
-            closeButton.relativePosition = new Vector3(Width - ExitButtonSize.x, 0, 0);
+            var closeButton = UIUtils.CreateButton(handle);
+            closeButton.size = _exitButtonSize;
+            closeButton.relativePosition = new Vector3(_width - _exitButtonSize.x, 0, 0);
             closeButton.anchor = UIAnchorStyle.Top | UIAnchorStyle.Right;
             closeButton.normalBgSprite = "buttonclose";
             closeButton.pressedBgSprite = "buttonclosepressed";
             closeButton.hoveredBgSprite = "buttonclosehover";
             closeButton.eventClicked += (sender, e) => Hide();
 
-            var labelPanel = AddUIComponent<UIPanel>();
-            labelPanel.size = new Vector2(Width, LabelHeight);
+            var labelPanel = UIUtils.CreatePanel(this, "TrackItCargoUIPanelLabel");
+            labelPanel.size = new Vector2(_width, _labelSize.y);
             labelPanel.autoLayout = true;
             labelPanel.autoLayoutDirection = LayoutDirection.Horizontal;
             labelPanel.autoLayoutStart = LayoutStart.TopRight;
-            labelPanel.autoLayoutPadding = Padding;
+            labelPanel.autoLayoutPadding = _padding;
 
-            localLabel = labelPanel.AddUIComponent<UILabel>();
-            localLabel.autoSize = false;
-            localLabel.size = new Vector2(ChartSize.x, LabelHeight);
-            localLabel.textAlignment = UIHorizontalAlignment.Center;
+            _localLabel = UIUtils.CreateLabel(labelPanel, "TrackItCargoUIPanelLocalLabel", Localization.Get("LOCAL"));
+            _localLabel.autoSize = false;
+            _localLabel.size = _labelSize;
+            _localLabel.textAlignment = UIHorizontalAlignment.Center;
 
-            importLabel = labelPanel.AddUIComponent<UILabel>();
-            importLabel.autoSize = false;
-            importLabel.size = new Vector2(ChartSize.x, LabelHeight);
-            importLabel.textAlignment = UIHorizontalAlignment.Center;
+            _importLabel = UIUtils.CreateLabel(labelPanel, "TrackItCargoUIPanelImportLabel", Localization.Get("IMPORT"));
+            _importLabel.autoSize = false;
+            _importLabel.size = _labelSize;
+            _importLabel.textAlignment = UIHorizontalAlignment.Center;
 
-            exportLabel = labelPanel.AddUIComponent<UILabel>();
-            exportLabel.autoSize = false;
-            exportLabel.size = new Vector2(ChartSize.x, LabelHeight);
-            exportLabel.textAlignment = UIHorizontalAlignment.Center;
+            _exportLabel = UIUtils.CreateLabel(labelPanel, "TrackItCargoUIPanelExportLabel", Localization.Get("EXPORT"));
+            _exportLabel.autoSize = false;
+            _exportLabel.size = _labelSize;
+            _exportLabel.textAlignment = UIHorizontalAlignment.Center;
 
-            var rcvdPanel = AddUIComponent<UIPanel>();
-            rcvdPanel.size = new Vector2(Width, ChartSize.y);
-            rcvdPanel.autoLayout = true;
-            rcvdPanel.autoLayoutDirection = LayoutDirection.Horizontal;
-            rcvdPanel.autoLayoutStart = LayoutStart.TopRight;
-            rcvdPanel.autoLayoutPadding = Padding;
+            _rcvdPanel = UIUtils.CreatePanel(this, "TrackItCargoUIPanelReceivedPanel");
+            _rcvdPanel.size = new Vector2(_width, _chartSize.y);
+            _rcvdPanel.autoLayout = true;
+            _rcvdPanel.autoLayoutDirection = LayoutDirection.Horizontal;
+            _rcvdPanel.autoLayoutStart = LayoutStart.TopRight;
+            _rcvdPanel.autoLayoutPadding = _padding;
 
-            rcvdLabel = rcvdPanel.AddUIComponent<UILabel>();
-            rcvdLabel.textAlignment = UIHorizontalAlignment.Right;
-            rcvdLabel.verticalAlignment = UIVerticalAlignment.Middle;
-            rcvdLabel.autoSize = false;
-            rcvdLabel.size = new Vector2(LabelWidth, ChartSize.y);
+            _rcvdLabel = UIUtils.CreateLabel(_rcvdPanel, "TrackItCargoUIPanelRcvdLabel", null);
+            _rcvdLabel.textAlignment = UIHorizontalAlignment.Right;
+            _rcvdLabel.verticalAlignment = UIVerticalAlignment.Middle;
+            _rcvdLabel.autoSize = false;
+            _rcvdLabel.size = new Vector2(_labelSize.x, _chartSize.y);
 
-            var rcvdStatPanel = AddUIComponent<UIPanel>();
-            rcvdStatPanel.size = new Vector2(Width, StatPanelHeight);
+            var rcvdStatPanel = UIUtils.CreatePanel(this, "TrackItCargoUIPanelRcvdStatPanel");
+            rcvdStatPanel.size = new Vector2(_width, _statPanelHeight);
             rcvdStatPanel.autoLayout = true;
             rcvdStatPanel.autoLayoutDirection = LayoutDirection.Horizontal;
             rcvdStatPanel.autoLayoutStart = LayoutStart.TopRight;
-            rcvdStatPanel.autoLayoutPadding = Padding;
+            rcvdStatPanel.autoLayoutPadding = _padding;
 
-            var sentPanel = AddUIComponent<UIPanel>();
-            sentPanel.size = new Vector2(Width, ChartSize.y);
-            sentPanel.autoLayout = true;
-            sentPanel.autoLayoutDirection = LayoutDirection.Horizontal;
-            sentPanel.autoLayoutStart = LayoutStart.TopRight;
-            sentPanel.autoLayoutPadding = Padding;
+            _sentPanel = UIUtils.CreatePanel(this, "TrackItCargoUIPanelSentPanel");
+            _sentPanel.size = new Vector2(_width, _chartSize.y);
+            _sentPanel.autoLayout = true;
+            _sentPanel.autoLayoutDirection = LayoutDirection.Horizontal;
+            _sentPanel.autoLayoutStart = LayoutStart.TopRight;
+            _sentPanel.autoLayoutPadding = _padding;
 
-            sentLabel = sentPanel.AddUIComponent<UILabel>();
-            sentLabel.textAlignment = UIHorizontalAlignment.Right;
-            sentLabel.verticalAlignment = UIVerticalAlignment.Middle;
-            sentLabel.autoSize = false;
-            sentLabel.size = new Vector2(LabelWidth, ChartSize.y);
+            _sentLabel = UIUtils.CreateLabel(_sentPanel, "TrackItCargoUIPanelSentLabel", null);
+            _sentLabel.textAlignment = UIHorizontalAlignment.Right;
+            _sentLabel.verticalAlignment = UIVerticalAlignment.Middle;
+            _sentLabel.autoSize = false;
+            _sentLabel.size = new Vector2(_labelSize.x, _chartSize.y);
 
-            var sentStatPanel = AddUIComponent<UIPanel>();
-            sentStatPanel.size = new Vector2(Width, StatPanelHeight);
+            var sentStatPanel = UIUtils.CreatePanel(this, "TrackItCargoUIPanelSentStatPanel");
+            sentStatPanel.size = new Vector2(_width, _statPanelHeight);
             sentStatPanel.autoLayout = true;
             sentStatPanel.autoLayoutDirection = LayoutDirection.Horizontal;
             sentStatPanel.autoLayoutStart = LayoutStart.TopRight;
-            sentStatPanel.autoLayoutPadding = Padding;
+            sentStatPanel.autoLayoutPadding = _padding;
 
-            resetButton = sentStatPanel.AddUIComponent<UIButton>();
-            resetButton.text = "Res";
-            resetButton.normalBgSprite = "ButtonMenu";
-            resetButton.pressedBgSprite = "ButtonMenuPressed";
-            resetButton.hoveredBgSprite = "ButtonMenuHovered";
-            resetButton.textScale = 0.6f;
-            resetButton.autoSize = false;
-            resetButton.size = ModeButtonSize;
+            _resetButton = UIUtils.CreateButton(sentStatPanel);
+            _resetButton.text = "Res";
+            _resetButton.textScale = 0.6f;
+            _resetButton.autoSize = false;
+            _resetButton.size = _modeButtonSize;
 
-            resetButton.eventClicked += (sender, e) =>
+            _resetButton.eventClicked += (sender, e) =>
             {
-                if (!mod.data.TryGetEntry(WorldInfoPanel.GetCurrentInstanceID().Building, out CargoStats2 stats)) return;
+                if (!_mod.data.TryGetEntry(WorldInfoPanel.GetCurrentInstanceID().Building, out CargoStats2 stats)) return;
                 Array.Clear(stats.CarsCounted, 0, stats.CarsCounted.Length);
             };
 
-            modeButton = sentStatPanel.AddUIComponent<UIButton>();
-            modeButton.text = "Prev";
-            modeButton.normalBgSprite = "ButtonMenu";
-            modeButton.pressedBgSprite = "ButtonMenuPressed";
-            modeButton.hoveredBgSprite = "ButtonMenuHovered";
-            modeButton.textScale = 0.6f;
-            modeButton.autoSize = false;
-            modeButton.size = ModeButtonSize;
+            _modeButton = UIUtils.CreateButton(sentStatPanel);
+            _modeButton.text = "Prev";
+            _modeButton.textScale = 0.6f;
+            _modeButton.autoSize = false;
+            _modeButton.size = _modeButtonSize;
 
-            modeButton.eventClicked += (sender, e) =>
+            _modeButton.eventClicked += (sender, e) =>
             {
-                displayCurrent = !displayCurrent;
-                modeButton.text = displayCurrent ? "Cur" : "Prev";
-                modeButton.tooltip = displayCurrent
+                _displayCurrent = !_displayCurrent;
+                _modeButton.text = _displayCurrent ? "Cur" : "Prev";
+                _modeButton.tooltip = _displayCurrent
                     ? Localization.Get("SWITCH_MODES_TOOLTIP_CUR")
                     : Localization.Get("SWITCH_MODES_TOOLTIP_PREV");
-                modeButton.RefreshTooltip();
+                _modeButton.RefreshTooltip();
             };
 
-            for (int n = 0; n < cargoCategories.Count; n++)
-            {
-                var chart = (n > 2 ? sentPanel : rcvdPanel).AddUIComponent<UICargoChart>();
-                chart.size = ChartSize;
-                charts.Add(chart);
-
-                var label = (n > 2 ? sentStatPanel : rcvdStatPanel).AddUIComponent<UILabel>();
-                label.autoSize = false;
-                label.size = new Vector2(ChartSize.x, StatPanelHeight);
-                label.textScale = 0.8f;
-                label.textColor = CargoUnitColor;
-                label.textAlignment = UIHorizontalAlignment.Center;
-                labels.Add(label);
-            }
-
-            FitChildren(new Vector2(Padding.top, Padding.left));
+            InitializeCharts(sentStatPanel, rcvdStatPanel);
+            FitChildren(new Vector2(_padding.top, _padding.left));
 
             // Load the locale and update it if game locale changes
             UpdateLocale();
@@ -194,45 +162,28 @@ namespace CargoInfoMod
 
         public void UpdateLocale()
         {
-            windowLabel.text = Localization.Get("STATS_WINDOW_LABEL");
-            localLabel.text = Localization.Get("LOCAL");
-            importLabel.text = Localization.Get("IMPORT");
-            exportLabel.text = Localization.Get("EXPORT");
-            rcvdLabel.text = Localization.Get("RECEIVED");
-            sentLabel.text = Localization.Get("SENT");
-            modeButton.tooltip = displayCurrent ?
+            _windowLabel.text = Localization.Get("STATS_WINDOW_LABEL");
+            _localLabel.text = Localization.Get("LOCAL");
+            _importLabel.text = Localization.Get("IMPORT");
+            _exportLabel.text = Localization.Get("EXPORT");
+            _rcvdLabel.text = Localization.Get("RECEIVED");
+            _sentLabel.text = Localization.Get("SENT");
+            _modeButton.tooltip = _displayCurrent ?
                 Localization.Get("SWITCH_MODES_TOOLTIP_CUR") :
                 Localization.Get("SWITCH_MODES_TOOLTIP_PREV");
-            resetButton.tooltip = Localization.Get("RESET_COUNTERS_TOOLTIP");
+            _resetButton.tooltip = Localization.Get("RESET_COUNTERS_TOOLTIP");
 
             UpdateCounterValues();
         }
 
         public void UpdateCounterValues()
         {
-            if (!mod.data.TryGetEntry(lastSelectedBuilding, out CargoStats2 stats)) return;
-
-            for (var i = 0; i < cargoCategories.Count; i++)
+            if (_mod.data.TryGetEntry(_lastSelectedBuilding, out CargoStats2 stats) && _charts.Count > 0)
             {
-                var category = cargoCategories[i];
-
-                var testFlag = displayCurrent ? CarFlags.None : CarFlags.Previous;
-
-                var categoryTotal = stats.GetTotalWhere(t => category(t) && (t & CarFlags.Previous) == testFlag);
-
-                labels[i].text = string.Format("{0:0}{1}", categoryTotal / 1000, Localization.Get("KILO_UNITS"));
-
-                if (categoryTotal == 0)
+                foreach (UICargoChart chart in _charts)
                 {
-                    charts[i].SetValues(CargoParcel.ResourceTypes.Select(t => 0f).ToArray());
-                    continue;
+                    chart.UpdateValues(stats);
                 }
-
-                var partStats = CargoParcel.ResourceTypes.Select(type => stats.GetTotalWhere(
-                                                                             t => category(t) && (t & CarFlags.Resource) == type && (t & CarFlags.Previous) == testFlag
-                                                                         ) / (float)categoryTotal).ToArray();
-
-                charts[i].SetValues(partStats.ToArray());
             }
         }
 
@@ -250,12 +201,52 @@ namespace CargoInfoMod
         {
             if (!isVisible) return;
 
-            if (mod?.data == null) return;
+            if (_mod?.data == null) return;
 
             if (WorldInfoPanel.GetCurrentInstanceID().Building != 0)
-                lastSelectedBuilding = WorldInfoPanel.GetCurrentInstanceID().Building;
+                _lastSelectedBuilding = WorldInfoPanel.GetCurrentInstanceID().Building;
 
             UpdateCounterValues();
+        }
+
+        private void InitializeCharts(UIPanel sentStatPanel, UIPanel rcvdStatPanel)
+        {
+            UICargoChart chart;
+            UILabel label;
+            for (int i = 0; i < 6; i++)
+            {
+                chart = UIUtils.CreateResourceRadialChart(i > 2 ? _sentPanel : _rcvdPanel, "TrackItCargoUIPanelResourceRadialChart" + i);
+                label = UIUtils.CreateLabel(i > 2 ? sentStatPanel : rcvdStatPanel, "TrackItCargoUIPanelResourceLabel" + i, null);
+                label.autoSize = false;
+                label.size = new Vector2(chart.size.x, _statPanelHeight);
+                label.textScale = 0.8f;
+                label.textColor = _unitColor;
+                label.textAlignment = UIHorizontalAlignment.Center;
+                switch (i)
+                {
+                    case 0:
+                        chart.Initialize(true, ResourceDestinationType.Local, label);
+                        break;
+                    case 1:
+                        chart.Initialize(true, ResourceDestinationType.Import, label);
+                        break;
+                    case 2:
+                        chart.Initialize(true, ResourceDestinationType.Export, label);
+                        break;
+                    case 3:
+                        chart.Initialize(false, ResourceDestinationType.Local, label);
+                        break;
+                    case 4:
+                        chart.Initialize(false, ResourceDestinationType.Import, label);
+                        break;
+                    case 5:
+                        chart.Initialize(false, ResourceDestinationType.Export, label);
+                        break;
+                }
+
+                _labels.Add(label);
+                _charts.Add(chart);
+            }
         }
     }
 }
