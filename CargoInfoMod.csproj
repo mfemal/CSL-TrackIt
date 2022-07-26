@@ -69,7 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CargoCounter.cs" />
-    <Compile Include="CargoData.cs" />
+    <Compile Include="CargoDescriptor.cs" />
     <Compile Include="CargoUIPanel.cs" />
     <Compile Include="DataManager.cs" />
     <Compile Include="GameEntityBuildingMonitor.cs" />
