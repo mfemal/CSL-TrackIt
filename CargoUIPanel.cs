@@ -19,7 +19,7 @@ namespace TrackIt
 
         private ushort _lastSelectedBuilding;
 
-        private List<UICargoChart> _charts = new List<UICargoChart>();
+        private List<CargoUIChart> _charts = new List<CargoUIChart>();
         private List<UILabel> _labels = new List<UILabel>();
         private UILabel _windowLabel, _localLabel, _importLabel, _exportLabel, _rcvdLabel, _sentLabel;
         private UIPanel _sentPanel, _rcvdPanel;
@@ -135,7 +135,7 @@ namespace TrackIt
         {
             if (DataManager.instance.TryGetEntry(_lastSelectedBuilding, out CargoStats2 stats) && _charts.Count > 0)
             {
-                foreach (UICargoChart chart in _charts)
+                foreach (CargoUIChart chart in _charts)
                 {
                     chart.SetValues(stats);
                 }
@@ -164,7 +164,7 @@ namespace TrackIt
 
         private void InitializeCharts(UIPanel sentStatPanel, UIPanel rcvdStatPanel)
         {
-            UICargoChart chart;
+            CargoUIChart chart;
             UILabel label;
             for (int i = 0; i < 6; i++)
             {

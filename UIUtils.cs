@@ -58,9 +58,9 @@ namespace TrackIt
         /// <param name="parent">Parent component name to attach to.</param>
         /// <param name="name">Name of the UI component, useful for browsing the scene in the explorer.</param>
         /// <returns></returns>
-        public static UICargoChart CreateCargoGroupedResourceChart(UIComponent parent, string name)
+        public static CargoUIChart CreateCargoGroupedResourceChart(UIComponent parent, string name)
         {
-            UICargoChart cargoChart = parent.AddUIComponent<UICargoChart>();
+            CargoUIChart cargoChart = parent.AddUIComponent<CargoUIChart>();
             cargoChart.name = ConstructModUIComponentName(name);
             cargoChart.spriteName = "PieChartBg";
             cargoChart.size = new Vector2(90, 90);

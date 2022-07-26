@@ -14,7 +14,7 @@ namespace TrackIt
     {
         private CityServiceVehicleWorldInfoPanel _cityServiceVehicleWorldInfoPanel;
         private ushort _cachedVehicleID;
-        private UICargoChart _vehicleCargoChart;
+        private CargoUIChart _vehicleCargoChart;
 
         public void Start()
         {

@@ -6,7 +6,7 @@ using TrackIt.API;
 
 namespace TrackIt
 {
-    class UICargoChart : UIRadialChart
+    class CargoUIChart : UIRadialChart
     {
         public UILabel TotalLabel;
 
@@ -20,7 +20,7 @@ namespace TrackIt
         /// </summary>
         public ResourceDestinationType ResourceDestinationType;
 
-        public UICargoChart()
+        public CargoUIChart()
         {
             size = new Vector2(90, 90);
             IList<ResourceCategoryType> standardGroups = UIUtils.CargoBasicResourceGroups;
