@@ -7,8 +7,8 @@
     <ProjectGuid>{D8974DAD-031E-4B97-8EF3-C9D3C3B36115}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CargoInfoMod.Data</RootNamespace>
-    <AssemblyName>CargoInfoMod.Data</AssemblyName>
+    <RootNamespace>TrackIt.API</RootNamespace>
+    <AssemblyName>TrackIt.API</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>

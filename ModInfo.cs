@@ -1,7 +1,7 @@
 ﻿using ICities;
 using CitiesHarmony.API;
 
-namespace CargoInfoMod
+namespace TrackIt
 {
     internal class Options
     {

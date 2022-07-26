@@ -2,9 +2,9 @@
 using System.Linq;
 using ColossalFramework.UI;
 using UnityEngine;
-using CargoInfoMod.Data;
+using TrackIt.API;
 
-namespace CargoInfoMod
+namespace TrackIt
 {
     class UICargoChart : UIRadialChart
     {

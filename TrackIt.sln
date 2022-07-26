@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.28803.352
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CargoInfoMod", "CargoInfoMod.csproj", "{62D7966C-846B-483A-BCB7-285FF3996C5A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackIt", "TrackIt.csproj", "{62D7966C-846B-483A-BCB7-285FF3996C5A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CargoInfoMod.Data", "Data\CargoInfoMod.Data.csproj", "{D8974DAD-031E-4B97-8EF3-C9D3C3B36115}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackIt.API", "Data\TrackIt.API.csproj", "{D8974DAD-031E-4B97-8EF3-C9D3C3B36115}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

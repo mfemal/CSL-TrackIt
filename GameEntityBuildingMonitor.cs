@@ -1,6 +1,6 @@
 ﻿using ICities;
 
-namespace CargoInfoMod
+namespace TrackIt
 {
     /// <summary>
     /// Since a standard exists to monitor changes in the UI with buildings in-game, tap into it for monitoring the data

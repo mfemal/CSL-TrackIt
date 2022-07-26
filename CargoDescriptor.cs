@@ -1,6 +1,6 @@
-﻿using CargoInfoMod.Data;
+﻿using TrackIt.API;
 
-namespace CargoInfoMod
+namespace TrackIt
 {
     /// <summary>
     /// Describes the summary of the contents of the cargo tracked. The details (i.e. bill of materials) are currently not tracked.

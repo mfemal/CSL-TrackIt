@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using ICities;
 
-namespace CargoInfoMod
+namespace TrackIt
 {
     internal class PersistenceExtension : SerializableDataExtensionBase
     {

@@ -1,4 +1,4 @@
-﻿namespace CargoInfoMod.Data
+﻿namespace TrackIt.API
 {
     /// <summary>
     /// Various extensions used for cargo tracking.

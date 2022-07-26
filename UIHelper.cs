@@ -2,7 +2,7 @@
 using System.Linq;
 using ColossalFramework.UI;
 
-namespace CargoInfoMod
+namespace TrackIt
 {
     public static class UIHelper
     {

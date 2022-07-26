@@ -5,7 +5,7 @@ using ColossalFramework.Globalization;
 using ColossalFramework.Plugins;
 using UnityEngine;
 
-namespace CargoInfoMod
+namespace TrackIt
 {
     public class Localization
     {

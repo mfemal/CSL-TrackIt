@@ -2,7 +2,7 @@
 using System.Reflection;
 using UnityEngine;
 
-namespace CargoInfoMod
+namespace TrackIt
 {
     /// <summary>
     /// utility routines for logging

@@ -7,8 +7,8 @@
     <ProjectGuid>{62D7966C-846B-483A-BCB7-285FF3996C5A}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CargoInfoMod</RootNamespace>
-    <AssemblyName>CargoInfoMod</AssemblyName>
+    <RootNamespace>TrackIt</RootNamespace>
+    <AssemblyName>TrackIt</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>
@@ -87,9 +87,9 @@
     <Compile Include="UIUtils.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Data\CargoInfoMod.Data.csproj">
-      <Project>{362564e1-ab70-424f-a0ec-c18e66494fa9}</Project>
-      <Name>CargoInfoMod.Data</Name>
+    <ProjectReference Include="Data\TrackIt.API.csproj">
+      <Project>{D8974DAD-031E-4B97-8EF3-C9D3C3B36115}</Project>
+      <Name>TrackIt.API</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

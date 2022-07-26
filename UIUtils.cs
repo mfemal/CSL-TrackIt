@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using ColossalFramework.UI;
 using UnityEngine;
-using CargoInfoMod.Data;
+using TrackIt.API;
 
-namespace CargoInfoMod
+namespace TrackIt
 {
     // Some Create methods are re-used or modified from the Building Themes mod (boformer); although some credits were
     // also noted in that mod to SamSamTS and AcidFire.

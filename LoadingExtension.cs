@@ -2,7 +2,7 @@
 using ICities;
 using UnityEngine;
 
-namespace CargoInfoMod
+namespace TrackIt
 {
     /// <summary>
     /// Handle the game loading and unloading events.

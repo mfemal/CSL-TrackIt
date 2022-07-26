@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using CargoInfoMod.Data;
+using TrackIt.API;
 
 using TransferType = TransferManager.TransferReason;
 
-namespace CargoInfoMod
+namespace TrackIt
 {
     /// <summary>
     /// Various utlity methods for extracting relevant information from game objects.

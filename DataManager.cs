@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using CargoInfoMod.Data;
+using TrackIt.API;
 
-namespace CargoInfoMod
+namespace TrackIt
 {
     internal class DataManager
     {

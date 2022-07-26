@@ -5,9 +5,9 @@ using System.Text;
 using UnityEngine;
 using ColossalFramework.UI;
 using ICities;
-using CargoInfoMod.Data;
+using TrackIt.API;
 
-namespace CargoInfoMod
+namespace TrackIt
 {
     public class CargoCounter : ThreadingExtensionBase
     {

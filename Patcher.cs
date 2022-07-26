@@ -3,7 +3,7 @@ using System.Reflection;
 using UnityEngine;
 using HarmonyLib;
 
-namespace CargoInfoMod
+namespace TrackIt
 {
     // Class and methods must be static
     public static class Patcher

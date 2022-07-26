@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace CargoInfoMod.Data
+namespace TrackIt.API
 {
     /// <summary>
     /// Track the destination type based on the source and destination of the transfer.
