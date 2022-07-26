@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿ using System.Text;
 using UnityEngine;
 using ColossalFramework.UI;
 using ICities;
@@ -11,12 +8,9 @@ namespace TrackIt
 {
     public class CargoCounter : ThreadingExtensionBase
     {
-        private UICargoChart vehicleCargoChart;
         private CargoUIPanel cargoPanel;
         private UILabel statsLabel;
         private UIPanel rightPanel;
-
-        private ushort _cachedVehicleID;
 
         public override void OnCreated(IThreading threading)
         {
@@ -58,8 +52,6 @@ namespace TrackIt
                 rightPanel.eventClicked -= showDelegate;
             if (cargoPanel != null)
                 GameObject.Destroy(cargoPanel);
-            if (vehicleCargoChart != null)
-                GameObject.Destroy(vehicleCargoChart);
         }
 
         private void SetupUIBindings()
@@ -91,22 +83,7 @@ namespace TrackIt
                 rightPanel.eventClicked += showDelegate;
             }
 
-            UIPanel cityServiceVehicleWorldInfoPanel = UIHelper.GetPanel("(Library) CityServiceVehicleWorldInfoPanel"); // UIUtils.GetGameUIPanel<CityServiceVehicleWorldInfoPanel>("(Library) CityServiceVehicleWorldInfoPanel");
-            var vehiclePanel = cityServiceVehicleWorldInfoPanel?.Find<UIPanel>("Panel");
-            if (vehiclePanel != null)
-            {
-                vehiclePanel.autoLayout = false;
-                vehicleCargoChart = UIUtils.CreateCargoGroupedResourceChart(vehiclePanel, "CargoUIPanelResourceRadialChart");
-                vehicleCargoChart.size = new Vector2(60, 60);
-                vehicleCargoChart.relativePosition = new Vector3(330, 0);
-            }
-            else
-            {
-                LogUtil.LogError("CityServiceVehicleWorldInfoPanel not found!");
-            }
         }
-
-        private DateTime lastReset = DateTime.MinValue;
 
         public override void OnUpdate(float realTimeDelta, float simulationTimeDelta)
         {
@@ -114,34 +91,8 @@ namespace TrackIt
                 return;
 
             UpdateBuildingInfoPanel();
-            UpdateVehicleInfoPanel();
 
             base.OnUpdate(realTimeDelta, simulationTimeDelta);
-        }
-
-        private void UpdateVehicleInfoPanel()
-        {
-            var vehicleID = WorldInfoPanel.GetCurrentInstanceID().Vehicle;
-            if (vehicleID != 0 && vehicleCargoChart != null && _cachedVehicleID != vehicleID)
-            {
-                _cachedVehicleID = vehicleID;
-
-                IDictionary<ResourceCategoryType, int> vehicleCargoCategoryTotals = GameEntityDataExtractor.GetVehicleCargoBasicResourceTotals(vehicleID);
-                if (vehicleCargoCategoryTotals.Count != 0)
-                {
-#if DEBUG
-                    LogUtil.LogInfo("Vehicle Cargo Total: " +
-                        vehicleCargoCategoryTotals.Select(kv => kv.Value).ToList().Sum() +
-                        ", Groups: {" + vehicleCargoCategoryTotals.Select(kv => kv.Key + ": " + kv.Value).Aggregate((p, c) => p + ": " + c) + "}");
-#endif
-                    vehicleCargoChart.SetValues(vehicleCargoCategoryTotals);
-                    vehicleCargoChart.isVisible = true;
-                }
-                else
-                {
-                    vehicleCargoChart.isVisible = false;
-                }
-            }
         }
 
         public void UpdateBuildingInfoPanel()

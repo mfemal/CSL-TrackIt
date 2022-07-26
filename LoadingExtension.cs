@@ -17,7 +17,8 @@ namespace TrackIt
             LoadMode.LoadGame,
             LoadMode.LoadScenario
         };
-        private LoadMode _loadMode; // track the state in OnLevelLoaded so cleanup can be done
+        private LoadMode _loadMode;      // track the state in OnLevelLoaded so cleanup can be done
+        private GameObject _rootObject;  // easily found in debug tools and allows monitors to support unity script events
 
         /// <summary>
         /// Invoked when a level has completed the loading process. This mod only runs when games are loaded for playing.
@@ -34,6 +35,9 @@ namespace TrackIt
                     return;
                 }
                 DataManager.instance.Initialize();
+
+                _rootObject = new GameObject(ModInfo.NamespacePrefix + "Manager");
+                _rootObject.AddComponent<VehicleWorldInfoPanelMonitor>();
             }
             catch (Exception e)
             {
@@ -53,6 +57,10 @@ namespace TrackIt
                     return;
                 }
                 DataManager.instance.Clear();
+                if (_rootObject != null)
+                {
+                    UnityEngine.Object.Destroy(_rootObject);
+                }
             }
             catch (Exception e)
             {

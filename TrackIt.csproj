@@ -85,6 +85,7 @@
     <Compile Include="UICargoChart.cs" />
     <Compile Include="UIHelper.cs" />
     <Compile Include="UIUtils.cs" />
+    <Compile Include="VehicleWorldInfoPanelMonitor.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Data\TrackIt.API.csproj">
