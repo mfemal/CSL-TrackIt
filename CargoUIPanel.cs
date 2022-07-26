@@ -182,7 +182,7 @@ namespace CargoInfoMod
             {
                 foreach (UICargoChart chart in _charts)
                 {
-                    chart.UpdateValues(stats);
+                    chart.SetValues(stats);
                 }
             }
         }
@@ -215,7 +215,7 @@ namespace CargoInfoMod
             UILabel label;
             for (int i = 0; i < 6; i++)
             {
-                chart = UIUtils.CreateResourceRadialChart(i > 2 ? _sentPanel : _rcvdPanel, "TrackItCargoUIPanelResourceRadialChart" + i);
+                chart = UIUtils.CreateCargoGroupedResourceChart(i > 2 ? _sentPanel : _rcvdPanel, "TrackItCargoUIPanelResourceRadialChart" + i);
                 label = UIUtils.CreateLabel(i > 2 ? sentStatPanel : rcvdStatPanel, "TrackItCargoUIPanelResourceLabel" + i, null);
                 label.autoSize = false;
                 label.size = new Vector2(chart.size.x, _statPanelHeight);

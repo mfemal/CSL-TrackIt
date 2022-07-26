@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text;
 using UnityEngine;
 using CargoInfoMod.Data;
+using System.Collections.Generic;
 
 namespace CargoInfoMod
 {
@@ -18,6 +19,8 @@ namespace CargoInfoMod
         private CargoUIPanel cargoPanel;
         private UILabel statsLabel;
         private UIPanel rightPanel;
+
+        private ushort _cachedVehicleID;
 
         public override void OnCreated(IThreading threading)
         {
@@ -64,8 +67,6 @@ namespace CargoInfoMod
 #if DEBUG
             LogUtil.LogInfo("Cleaning up UI...");
 #endif
-            //if (statsLabel != null)
-            //    statsLabel.eventClicked -= showDelegate;
             if (rightPanel != null)
                 rightPanel.eventClicked -= showDelegate;
             if (cargoPanel != null)
@@ -81,14 +82,11 @@ namespace CargoInfoMod
 #endif
             cargoPanel = (CargoUIPanel)UIView.GetAView().AddUIComponent(typeof(CargoUIPanel));
 
-            var servicePanel = UIHelper.GetPanel("(Library) CityServiceWorldInfoPanel");
-            //var statsPanel = servicePanel?.Find<UIPanel>("DescPanel");
-            //statsLabel = statsPanel?.Find<UILabel>("Desc");
-            statsLabel = servicePanel?.Find<UILabel>("Desc");
-            rightPanel = servicePanel?.Find<UIPanel>("Right");
-            if (servicePanel == null)
+            UIPanel cityServiceWorldInfoPanel = UIHelper.GetPanel("(Library) CityServiceWorldInfoPanel"); //UIUtils.GetGameUIPanel<CityServiceWorldInfoPanel>("(Library) CityServiceWorldInfoPanel");
+            statsLabel = cityServiceWorldInfoPanel?.Find<UILabel>("Desc");
+            rightPanel = cityServiceWorldInfoPanel?.Find<UIPanel>("Right");
+            if (cityServiceWorldInfoPanel == null)
                 LogUtil.LogError("CityServiceWorldInfoPanel not found");
-            //if (statsLabel == null)
             if (rightPanel == null)
                 LogUtil.LogError("ServicePanel.Right panel not found");
             else
@@ -103,20 +101,17 @@ namespace CargoInfoMod
                         cargoPanel.Show();
                     }
                 };
-
-                //statsLabel.eventClicked += showDelegate;
                 rightPanel.eventClicked += showDelegate;
             }
 
-            var vehicleMainPanel = UIHelper.GetPanel("(Library) CityServiceVehicleWorldInfoPanel");
-            var vehiclePanel = vehicleMainPanel.Find<UIPanel>("Panel");
+            UIPanel cityServiceVehicleWorldInfoPanel = UIHelper.GetPanel("(Library) CityServiceVehicleWorldInfoPanel"); // UIUtils.GetGameUIPanel<CityServiceVehicleWorldInfoPanel>("(Library) CityServiceVehicleWorldInfoPanel");
+            var vehiclePanel = cityServiceVehicleWorldInfoPanel?.Find<UIPanel>("Panel");
             if (vehiclePanel != null)
             {
                 vehiclePanel.autoLayout = false;
-                vehicleCargoChart = vehiclePanel.AddUIComponent<UICargoChart>();
+                vehicleCargoChart = UIUtils.CreateCargoGroupedResourceChart(vehiclePanel, "TrackItCargoUIPanelResourceRadialChart");
                 vehicleCargoChart.size = new Vector2(60, 60);
                 vehicleCargoChart.relativePosition = new Vector3(330, 0);
-                vehicleCargoChart.SetValues(CargoParcel.ResourceTypes.Select(f => 1f / CargoParcel.ResourceTypes.Length).ToArray());
             }
             else
             {
@@ -151,49 +146,20 @@ namespace CargoInfoMod
         private void UpdateVehicleInfoPanel()
         {
             var vehicleID = WorldInfoPanel.GetCurrentInstanceID().Vehicle;
-            if (vehicleID != 0 && vehicleCargoChart != null)
+            if (vehicleID != 0 && vehicleCargoChart != null && _cachedVehicleID != vehicleID)
             {
-                int guard = 0;
+                _cachedVehicleID = vehicleID;
 
-                // Find leading vehicle that actually has all the cargo
-                while (VehicleManager.instance.m_vehicles.m_buffer[vehicleID].m_leadingVehicle != 0)
+                IDictionary<ResourceCategoryType, int> vehicleCargoCategoryTotals = GameEntityDataExtractor.GetVehicleCargoBasicResourceTotals(vehicleID);
+                if (vehicleCargoCategoryTotals.Count != 0)
                 {
-                    guard++;
-                    vehicleID = VehicleManager.instance.m_vehicles.m_buffer[vehicleID].m_leadingVehicle;
-                    if (guard > ushort.MaxValue)
-                    {
-                        LogUtil.LogError("Invalid list detected!");
-                        return;
-                    }
-                }
-
-                var ai = VehicleManager.instance.m_vehicles.m_buffer[vehicleID].Info.m_vehicleAI;
-                if (ai is CargoTrainAI || ai is CargoShipAI)
-                {
-                    var cargo = VehicleManager.instance.m_vehicles.m_buffer[vehicleID].m_firstCargo;
-                    var result = new float[CargoParcel.ResourceTypes.Length];
-                    guard = 0;
-                    while (cargo != 0)
-                    {
-                        var parcel = new CargoParcel(0, false,
-                            VehicleManager.instance.m_vehicles.m_buffer[cargo].m_transferType,
-                            VehicleManager.instance.m_vehicles.m_buffer[cargo].m_transferSize,
-                            VehicleManager.instance.m_vehicles.m_buffer[cargo].m_flags);
-                        result[parcel.ResourceType] += parcel.transferSize;
-                        cargo = VehicleManager.instance.m_vehicles.m_buffer[cargo].m_nextCargo;
-                        guard++;
-                        if (guard > ushort.MaxValue)
-                        {
-                            LogUtil.LogError("Invalid list detected!");
-                            return;
-                        }
-                    }
-                    var total = result.Sum();
-                    Debug.Log(string.Join(", ", result.Select(v => v / total).Select(f => f.ToString()).ToArray()));
+#if DEBUG
+                    LogUtil.LogInfo("Vehicle Cargo Total: " +
+                        vehicleCargoCategoryTotals.Select(kv => kv.Value).ToList().Sum() +
+                        ", Groups: {" + vehicleCargoCategoryTotals.Select(kv => kv.Key + ": " + kv.Value).Aggregate((p, c) => p + ": " + c) + "}");
+#endif
+                    vehicleCargoChart.SetValues(vehicleCargoCategoryTotals);
                     vehicleCargoChart.isVisible = true;
-                    vehicleCargoChart.tooltip = string.Format("{0:0}{1}", total / 1000, Localization.Get("KILO_UNITS"));
-                    if (Math.Abs(total) < 1f) total = 1f;
-                    vehicleCargoChart.SetValues(result.Select(v => v / total).ToArray());
                 }
                 else
                 {
@@ -212,14 +178,6 @@ namespace CargoInfoMod
                 if (instanceID.Building != 0 && mod.data.TryGetEntry(instanceID.Building, out stats))
                 {
                     var sb = new StringBuilder();
-                    var timeScale = mod.Options.UseMonthlyValues ? 1.0f : 0.25f;
-
-                    var receivedAmount = Mathf.Ceil(Mathf.Max(stats.CarsReceived, stats.CarsReceivedLastTime) /
-                                                    CargoData.TruckCapacity * timeScale);
-
-                    var sentAmount = Mathf.Ceil(Mathf.Max(stats.CarsSent, stats.CarsSentLastTime) /
-                                                CargoData.TruckCapacity * timeScale);
-
                     sb.AppendFormat(
                         "{0}: {1:0}",
                         Localization.Get(mod.Options.UseMonthlyValues ? "TRUCKS_RCVD_LAST_MONTH" : "TRUCKS_RCVD_LAST_WEEK"),

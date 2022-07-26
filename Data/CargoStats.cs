@@ -1,7 +1,7 @@
 ﻿using System;
-using System.Text;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace CargoInfoMod.Data
 {
@@ -83,17 +83,52 @@ namespace CargoInfoMod.Data
         Fish
     }
 
+    /// <summary>
+    /// In general, tracked resources should be considered immutable after creation, although some state may change during transit.
+    /// </summary>
     public class TrackedResource
     {
         /// <summary>
         /// Game timestamp for a resource. This could change based on whether a resource is sent or received based on its state.
         /// </summary>
-        public DateTime _ts;
+        public DateTime ts;
 
         internal ResourceDestinationType _resourceDestinationType;
         internal ResourceCategoryType _resourceCategoryType;
         internal ResourceType _resourceType;
         internal int _amount;
+
+        public int Amount
+        {
+            get
+            {
+                return _amount;
+            }
+        }
+
+        public ResourceType ResourceType
+        {
+            get
+            {
+                return _resourceType;
+            }
+        }
+
+        public ResourceCategoryType ResourceCategoryType
+        {
+            get
+            {
+                return _resourceCategoryType;
+            }
+        }
+
+        public ResourceDestinationType ResourceDestinationType
+        {
+            get
+            {
+                return _resourceDestinationType;
+            }
+        }
 
         /// <summary>
         /// Create an instance of a tracked cargo resource.
@@ -107,9 +142,8 @@ namespace CargoInfoMod.Data
             _resourceDestinationType = resourceDestinationType;
             _resourceType = resourceType;
             _amount = amount;
-            _ts = ts;
-
             _resourceCategoryType = resourceType.InferResourceCategoryType();
+            this.ts = ts;
         }
     }
 

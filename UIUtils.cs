@@ -1,6 +1,9 @@
-﻿using CargoInfoMod.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using ColossalFramework.UI;
 using UnityEngine;
+using CargoInfoMod.Data;
 
 namespace CargoInfoMod
 {
@@ -8,6 +11,31 @@ namespace CargoInfoMod
     // also noted in that mod to SamSamTS and AcidFire.
     internal class UIUtils
     {
+        /// <summary>
+        /// Provides a convenience member to filter on appropriate cargo resource categories used throughout the UI.
+        /// </summary>
+        /// <returns>An unordered list of basic categories suitable for grouping (i.e. Ore, Agriculture, etc.), values in this list are immutable.</returns>
+        public static IList<ResourceCategoryType> CargoBasicResourceGroups
+        {
+            get
+            {
+                return s_resourceCategories;
+            }
+        }
+
+        // Resource categories to include in the radial chart (filtered to exclude )
+        private static readonly IList<ResourceCategoryType> s_resourceCategories;
+
+        static UIUtils()
+        {
+            // extract these once, they will never change
+            s_resourceCategories = Enum.GetValues(typeof(ResourceCategoryType))
+                .Cast<ResourceCategoryType>()
+                .Except(new List<ResourceCategoryType>() { ResourceCategoryType.None })
+                .ToList()
+                .AsReadOnly();
+        }
+
         public static UIButton CreateButton(UIComponent parent)
         {
             UIButton button = parent.AddUIComponent<UIButton>();
@@ -30,7 +58,7 @@ namespace CargoInfoMod
         /// <param name="parent">Parent component name to attach to.</param>
         /// <param name="name">Name of the UI component, useful for browsing the scene in the explorer.</param>
         /// <returns></returns>
-        public static UICargoChart CreateResourceRadialChart(UIComponent parent, string name)
+        public static UICargoChart CreateCargoGroupedResourceChart(UIComponent parent, string name)
         {
             UICargoChart cargoChart = parent.AddUIComponent<UICargoChart>();
             cargoChart.name = name;
@@ -57,37 +85,62 @@ namespace CargoInfoMod
         }
 
         /// <summary>
+        /// Find a UIPanel component based on its name. The name can be determined by ILSpy or using mod tools. This method
+        /// is useful to perform lookups on named objects without traversing the UI tree of objects directly.
+        /// </summary>
+        /// <typeparam name="T">The type of the panel to find (class found in a code inspector)</typeparam>
+        /// <param name="name">The provided name of the panel.</param>
+        /// <returns>The UI panel found or null (if not found or not initialized).</returns>
+        public static UIPanel GetGameUIPanel<T>(string name)
+        {
+            if (name == null)
+            {
+                return null;
+            }
+            GameObject o = GameObject.Find(name);
+            if (o == null)
+            {
+                return null;
+            }
+            T component = o.GetComponent<T>();
+            if (component == null || !(component is UIPanel))
+            {
+                return null;
+            }
+            return component as UIPanel;
+        }
+
+        /// <summary>
         /// Get the resource color for the resource tracked category type. These are the same colors used for import and export.
         /// Original concept for this in EOCV from rcav8tr (Extended Outside Connections View) although this is adapted appropriately
         /// for usage in this mod.
         /// </summary>
         public static Color GetResourceCategoryColor(ResourceCategoryType type)
         {
-            // translate resource type to transfer reason
-            int reason;
+            int transferReason; // translate resource type to transfer reason
             switch (type)
             {
                 // these are the reasons used in OutsideConnectionsInfoViewPanel in SetupImportLegend and SetupExportLegend
                 case ResourceCategoryType.Goods:
-                    reason = (int)TransferManager.TransferReason.Goods;
+                    transferReason = (int)TransferManager.TransferReason.Goods;
                     break;
                 case ResourceCategoryType.Forestry:
-                    reason = (int)TransferManager.TransferReason.Logs;
+                    transferReason = (int)TransferManager.TransferReason.Logs;
                     break;
                 case ResourceCategoryType.Agriculture:
-                    reason = (int)TransferManager.TransferReason.Grain;
+                    transferReason = (int)TransferManager.TransferReason.Grain;
                     break;
                 case ResourceCategoryType.Ore:
-                    reason = (int)TransferManager.TransferReason.Ore;
+                    transferReason = (int)TransferManager.TransferReason.Ore;
                     break;
                 case ResourceCategoryType.Oil:
-                    reason = (int)TransferManager.TransferReason.Oil;
+                    transferReason = (int)TransferManager.TransferReason.Oil;
                     break;
                 case ResourceCategoryType.Mail:
-                    reason = (int)TransferManager.TransferReason.Mail;
+                    transferReason = (int)TransferManager.TransferReason.Mail;
                     break;
                 case ResourceCategoryType.Fish:
-                    reason = (int)TransferManager.TransferReason.Fish;
+                    transferReason = (int)TransferManager.TransferReason.Fish;
                     break;
                 default:
                     LogUtil.LogError($"Unable to translate resource category type [{type}] to resource color.");
@@ -95,7 +148,7 @@ namespace CargoInfoMod
             }
 
             // do not get colors from color sprites because they might not be initialized yet
-            return TransferManager.instance.m_properties.m_resourceColors[reason];
+            return TransferManager.instance.m_properties.m_resourceColors[transferReason];
         }
     }
 }

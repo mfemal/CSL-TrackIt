@@ -1,14 +1,12 @@
 ﻿using System;
-using CargoInfoMod.Data;
-using ColossalFramework.Plugins;
-using ICities;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using UnityEngine;
+using ColossalFramework.Plugins;
+using ICities;
+using CargoInfoMod.Data;
 
 using TransferType = TransferManager.TransferReason;
 
@@ -373,106 +371,17 @@ namespace CargoInfoMod
                 DateTime ts = SimulationManager.instance.m_currentGameTime.Date; // Ignore the time component
                 if ((cargo.flags & CarFlags.Sent) != 0)
                 {
-                    stats.TrackResourceSent(ts, resourceDestinationType, convertTransferType(cargo.transferType), cargo.transferSize);
+                    stats.TrackResourceSent(ts, resourceDestinationType, GameEntityDataExtractor.ConvertTransferType(cargo.transferType), cargo.transferSize);
                 }
                 else
                 {
-                    stats.TrackResourceReceived(ts, resourceDestinationType, convertTransferType(cargo.transferType), cargo.transferSize);
+                    stats.TrackResourceReceived(ts, resourceDestinationType, GameEntityDataExtractor.ConvertTransferType(cargo.transferType), cargo.transferSize);
                 }
             }
 
 #if DEBUG
             LogUtil.LogInfo($"Updated building: {cargo.building} stats: {{ {stats} }}");
 #endif
-        }
-
-        /// <summary>
-        /// Translate the game representation for the transfer type to the internal module version.
-        /// </summary>
-        /// <param name="transferType">The TransferManager.TransferReason byte value</param>
-        /// <returns>Mod resource type to include 'None' if a valid cannot be determined from transferType</returns>
-        private ResourceType convertTransferType(byte transferType)
-        {
-            ResourceType resourceType;
-
-            switch ((TransferType)transferType)
-            {
-                case TransferType.Oil:
-                    resourceType = ResourceType.Oil;
-                    break;
-                case TransferType.Ore:
-                    resourceType = ResourceType.Ore;
-                    break;
-                case TransferType.Logs:
-                    resourceType = ResourceType.Logs;
-                    break;
-                case TransferType.Grain:
-                    resourceType = ResourceType.Grain;
-                    break;
-                case TransferType.Petrol:
-                    resourceType = ResourceType.Petrol;
-                    break;
-                case TransferType.Coal:
-                    resourceType = ResourceType.Coal;
-                    break;
-                case TransferType.Lumber:
-                    resourceType = ResourceType.Lumber;
-                    break;
-                case TransferType.Food:
-                    resourceType = ResourceType.Food;
-                    break;
-                case TransferType.Goods:
-                    resourceType = ResourceType.Goods;
-                    break;
-                case TransferType.Mail:
-                    resourceType = ResourceType.Mail;
-                    break;
-                case TransferType.UnsortedMail:
-                    resourceType = ResourceType.UnsortedMail;
-                    break;
-                case TransferType.SortedMail:
-                    resourceType = ResourceType.SortedMail;
-                    break;
-                case TransferType.OutgoingMail:
-                    resourceType = ResourceType.OutgoingMail;
-                    break;
-                case TransferType.IncomingMail:
-                    resourceType = ResourceType.IncomingMail;
-                    break;
-                case TransferType.AnimalProducts:
-                    resourceType = ResourceType.AnimalProducts;
-                    break;
-                case TransferType.Flours:
-                    resourceType = ResourceType.Flours;
-                    break;
-                case TransferType.Paper:
-                    resourceType = ResourceType.Paper;
-                    break;
-                case TransferType.PlanedTimber:
-                    resourceType = ResourceType.PlanedTimber;
-                    break;
-                case TransferType.Petroleum:
-                    resourceType = ResourceType.Petroleum;
-                    break;
-                case TransferType.Plastics:
-                    resourceType = ResourceType.Plastics;
-                    break;
-                case TransferType.Glass:
-                    resourceType = ResourceType.Glass;
-                    break;
-                case TransferType.Metals:
-                    resourceType = ResourceType.Metals;
-                    break;
-                case TransferType.LuxuryProducts:
-                    resourceType = ResourceType.LuxuryProducts;
-                    break;
-                default:
-                    string transferTypeName = Enum.GetName(typeof(TransferType), transferType);
-                    LogUtil.LogWarning($"Unexpected transfer type: {transferTypeName}, cannot convert resource type.");
-                    resourceType = ResourceType.None;
-                    break;
-            }
-            return resourceType;
         }
     }
 }

@@ -71,6 +71,7 @@
     <Compile Include="CargoCounter.cs" />
     <Compile Include="CargoData.cs" />
     <Compile Include="CargoUIPanel.cs" />
+    <Compile Include="GameEntityDataExtractor.cs" />
     <Compile Include="Localization.cs" />
     <Compile Include="LogUtil.cs" />
     <Compile Include="ModInfo.cs" />
