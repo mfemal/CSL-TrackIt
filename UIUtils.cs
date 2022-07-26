@@ -61,7 +61,7 @@ namespace TrackIt
         public static UICargoChart CreateCargoGroupedResourceChart(UIComponent parent, string name)
         {
             UICargoChart cargoChart = parent.AddUIComponent<UICargoChart>();
-            cargoChart.name = name;
+            cargoChart.name = ConstructModUIComponentName(name);
             cargoChart.spriteName = "PieChartBg";
             cargoChart.size = new Vector2(90, 90);
             return cargoChart;
@@ -70,7 +70,7 @@ namespace TrackIt
         public static UILabel CreateLabel(UIComponent parent, string name, string text)
         {
             UILabel label = parent.AddUIComponent<UILabel>();
-            label.name = name;
+            label.name = ConstructModUIComponentName(name);
             label.text = text;
 
             return label;
@@ -79,7 +79,7 @@ namespace TrackIt
         public static UIPanel CreatePanel(UIComponent parent, string name)
         {
             UIPanel panel = parent.AddUIComponent<UIPanel>();
-            panel.name = name;
+            panel.name = ConstructModUIComponentName(name);
 
             return panel;
         }
@@ -108,6 +108,25 @@ namespace TrackIt
                 return null;
             }
             return component as UIPanel;
+        }
+
+        /// <summary>
+        /// Construct a component name created by this mod by attempting to make it semi-unique and searchable by prepending
+        /// the namespace prefix. This method can be safely called multiple times with 's'.
+        /// </summary>
+        /// <param name="s">Starting string (if null, null is returned) to prefix.</param>
+        /// <returns>Null if s is null, otherwise a prefixed string using the namespace and the provided s.</returns>
+        public static string ConstructModUIComponentName(string s)
+        {
+            if (s == null)
+            {
+                return null;
+            }
+            if (s.StartsWith(ModInfo.NamespacePrefix))
+            {
+                return s;
+            }
+            return ModInfo.NamespacePrefix + s;
         }
 
         /// <summary>

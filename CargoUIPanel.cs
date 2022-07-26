@@ -47,62 +47,62 @@ namespace TrackIt
             closeButton.hoveredBgSprite = "buttonclosehover";
             closeButton.eventClicked += (sender, e) => Hide();
 
-            var labelPanel = UIUtils.CreatePanel(this, "TrackItCargoUIPanelLabel");
+            var labelPanel = UIUtils.CreatePanel(this, "CargoUIPanelLabel");
             labelPanel.size = new Vector2(_width, _labelSize.y);
             labelPanel.autoLayout = true;
             labelPanel.autoLayoutDirection = LayoutDirection.Horizontal;
             labelPanel.autoLayoutStart = LayoutStart.TopRight;
             labelPanel.autoLayoutPadding = _padding;
 
-            _localLabel = UIUtils.CreateLabel(labelPanel, "TrackItCargoUIPanelLocalLabel", Localization.Get("LOCAL"));
+            _localLabel = UIUtils.CreateLabel(labelPanel, "CargoUIPanelLocalLabel", Localization.Get("LOCAL"));
             _localLabel.autoSize = false;
             _localLabel.size = _labelSize;
             _localLabel.textAlignment = UIHorizontalAlignment.Center;
 
-            _importLabel = UIUtils.CreateLabel(labelPanel, "TrackItCargoUIPanelImportLabel", Localization.Get("IMPORT"));
+            _importLabel = UIUtils.CreateLabel(labelPanel, "CargoUIPanelImportLabel", Localization.Get("IMPORT"));
             _importLabel.autoSize = false;
             _importLabel.size = _labelSize;
             _importLabel.textAlignment = UIHorizontalAlignment.Center;
 
-            _exportLabel = UIUtils.CreateLabel(labelPanel, "TrackItCargoUIPanelExportLabel", Localization.Get("EXPORT"));
+            _exportLabel = UIUtils.CreateLabel(labelPanel, "CargoUIPanelExportLabel", Localization.Get("EXPORT"));
             _exportLabel.autoSize = false;
             _exportLabel.size = _labelSize;
             _exportLabel.textAlignment = UIHorizontalAlignment.Center;
 
-            _rcvdPanel = UIUtils.CreatePanel(this, "TrackItCargoUIPanelReceivedPanel");
+            _rcvdPanel = UIUtils.CreatePanel(this, "CargoUIPanelReceivedPanel");
             _rcvdPanel.size = new Vector2(_width, _chartSize.y);
             _rcvdPanel.autoLayout = true;
             _rcvdPanel.autoLayoutDirection = LayoutDirection.Horizontal;
             _rcvdPanel.autoLayoutStart = LayoutStart.TopRight;
             _rcvdPanel.autoLayoutPadding = _padding;
 
-            _rcvdLabel = UIUtils.CreateLabel(_rcvdPanel, "TrackItCargoUIPanelRcvdLabel", null);
+            _rcvdLabel = UIUtils.CreateLabel(_rcvdPanel, "CargoUIPanelRcvdLabel", null);
             _rcvdLabel.textAlignment = UIHorizontalAlignment.Right;
             _rcvdLabel.verticalAlignment = UIVerticalAlignment.Middle;
             _rcvdLabel.autoSize = false;
             _rcvdLabel.size = new Vector2(_labelSize.x, _chartSize.y);
 
-            var rcvdStatPanel = UIUtils.CreatePanel(this, "TrackItCargoUIPanelRcvdStatPanel");
+            var rcvdStatPanel = UIUtils.CreatePanel(this, "CargoUIPanelRcvdStatPanel");
             rcvdStatPanel.size = new Vector2(_width, _statPanelHeight);
             rcvdStatPanel.autoLayout = true;
             rcvdStatPanel.autoLayoutDirection = LayoutDirection.Horizontal;
             rcvdStatPanel.autoLayoutStart = LayoutStart.TopRight;
             rcvdStatPanel.autoLayoutPadding = _padding;
 
-            _sentPanel = UIUtils.CreatePanel(this, "TrackItCargoUIPanelSentPanel");
+            _sentPanel = UIUtils.CreatePanel(this, "CargoUIPanelSentPanel");
             _sentPanel.size = new Vector2(_width, _chartSize.y);
             _sentPanel.autoLayout = true;
             _sentPanel.autoLayoutDirection = LayoutDirection.Horizontal;
             _sentPanel.autoLayoutStart = LayoutStart.TopRight;
             _sentPanel.autoLayoutPadding = _padding;
 
-            _sentLabel = UIUtils.CreateLabel(_sentPanel, "TrackItCargoUIPanelSentLabel", null);
+            _sentLabel = UIUtils.CreateLabel(_sentPanel, "CargoUIPanelSentLabel", null);
             _sentLabel.textAlignment = UIHorizontalAlignment.Right;
             _sentLabel.verticalAlignment = UIVerticalAlignment.Middle;
             _sentLabel.autoSize = false;
             _sentLabel.size = new Vector2(_labelSize.x, _chartSize.y);
 
-            var sentStatPanel = UIUtils.CreatePanel(this, "TrackItCargoUIPanelSentStatPanel");
+            var sentStatPanel = UIUtils.CreatePanel(this, "CargoUIPanelSentStatPanel");
             sentStatPanel.size = new Vector2(_width, _statPanelHeight);
             sentStatPanel.autoLayout = true;
             sentStatPanel.autoLayoutDirection = LayoutDirection.Horizontal;
@@ -168,8 +168,8 @@ namespace TrackIt
             UILabel label;
             for (int i = 0; i < 6; i++)
             {
-                chart = UIUtils.CreateCargoGroupedResourceChart(i > 2 ? _sentPanel : _rcvdPanel, "TrackItCargoUIPanelResourceRadialChart" + i);
-                label = UIUtils.CreateLabel(i > 2 ? sentStatPanel : rcvdStatPanel, "TrackItCargoUIPanelResourceLabel" + i, null);
+                chart = UIUtils.CreateCargoGroupedResourceChart(i > 2 ? _sentPanel : _rcvdPanel, "CargoUIPanelResourceRadialChart" + i);
+                label = UIUtils.CreateLabel(i > 2 ? sentStatPanel : rcvdStatPanel, "CargoUIPanelResourceLabel" + i, null);
                 label.autoSize = false;
                 label.size = new Vector2(chart.size.x, _statPanelHeight);
                 label.textScale = 0.8f;

@@ -96,7 +96,7 @@ namespace TrackIt
             if (vehiclePanel != null)
             {
                 vehiclePanel.autoLayout = false;
-                vehicleCargoChart = UIUtils.CreateCargoGroupedResourceChart(vehiclePanel, "TrackItCargoUIPanelResourceRadialChart");
+                vehicleCargoChart = UIUtils.CreateCargoGroupedResourceChart(vehiclePanel, "CargoUIPanelResourceRadialChart");
                 vehicleCargoChart.size = new Vector2(60, 60);
                 vehicleCargoChart.relativePosition = new Vector3(330, 0);
             }
