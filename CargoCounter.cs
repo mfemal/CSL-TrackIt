@@ -1,20 +1,16 @@
-﻿using ColossalFramework.Plugins;
-using ColossalFramework.UI;
-using ICities;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using UnityEngine;
+using ColossalFramework.UI;
+using ICities;
 using CargoInfoMod.Data;
-using System.Collections.Generic;
 
 namespace CargoInfoMod
 {
     public class CargoCounter : ThreadingExtensionBase
     {
-        private ModInfo mod;
-
         private UICargoChart vehicleCargoChart;
         private CargoUIPanel cargoPanel;
         private UILabel statsLabel;
@@ -25,7 +21,6 @@ namespace CargoInfoMod
         public override void OnCreated(IThreading threading)
         {
             base.OnCreated(threading);
-            mod = PluginManager.instance.FindPluginInfo(Assembly.GetExecutingAssembly()).userModInstance as ModInfo;
 
             if (LoadingManager.instance.m_loadingComplete)
             {
@@ -51,14 +46,6 @@ namespace CargoInfoMod
         private void OnLevelLoaded(SimulationManager.UpdateMode updateMode)
         {
             OnLevelUnloaded();
-
-            if (updateMode != SimulationManager.UpdateMode.NewGameFromMap &&
-                updateMode != SimulationManager.UpdateMode.NewGameFromScenario &&
-                updateMode != SimulationManager.UpdateMode.LoadGame)
-                return;
-
-            mod.data.Setup();
-
             SetupUIBindings();
         }
 
@@ -96,7 +83,7 @@ namespace CargoInfoMod
 #endif
                 showDelegate = (sender, e) =>
                 {
-                    if (mod.data.TryGetEntry(WorldInfoPanel.GetCurrentInstanceID().Building, out _))
+                    if (DataManager.instance.TryGetEntry(WorldInfoPanel.GetCurrentInstanceID().Building, out _))
                     {
                         cargoPanel.Show();
                     }
@@ -123,17 +110,6 @@ namespace CargoInfoMod
 
         public override void OnUpdate(float realTimeDelta, float simulationTimeDelta)
         {
-            DateTime tempDateTime = SimulationManager.instance.m_currentGameTime;
-            if ((mod.Options.UpdateHourly && lastReset.Hour < tempDateTime.Hour) ||
-                (!mod.Options.UpdateHourly && lastReset < tempDateTime && tempDateTime.Day == 1))
-            {
-                lastReset = tempDateTime;
-                //mod.data.UpdateCounters();
-#if DEBUG
-                LogUtil.LogInfo("Monthly counter values updated");
-#endif
-            }
-
             if (!WorldInfoPanel.AnyWorldInfoPanelOpen())
                 return;
 
@@ -175,17 +151,17 @@ namespace CargoInfoMod
             if (statsLabel != null)
             {
                 CargoStats2 stats;
-                if (instanceID.Building != 0 && mod.data.TryGetEntry(instanceID.Building, out stats))
+                if (instanceID.Building != 0 && DataManager.instance.TryGetEntry(instanceID.Building, out stats))
                 {
                     var sb = new StringBuilder();
                     sb.AppendFormat(
                         "{0}: {1:0}",
-                        Localization.Get(mod.Options.UseMonthlyValues ? "TRUCKS_RCVD_LAST_MONTH" : "TRUCKS_RCVD_LAST_WEEK"),
+                        Localization.Get("TRUCKS_RCVD"),
                         stats.CountResourcesReceived());
                     sb.AppendLine();
                     sb.AppendFormat(
                         "{0}: {1:0}",
-                        Localization.Get(mod.Options.UseMonthlyValues ? "TRUCKS_SENT_LAST_MONTH" : "TRUCKS_SENT_LAST_WEEK"),
+                        Localization.Get("TRUCKS_SENT"),
                         stats.CountResourcesSent());
                     sb.AppendLine();
                     sb.Append(Localization.Get("CLICK_MORE"));

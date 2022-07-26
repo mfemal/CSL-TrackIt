@@ -1,39 +1,28 @@
-﻿using ColossalFramework;
-using ICities;
+﻿using ICities;
 using CitiesHarmony.API;
 
 namespace CargoInfoMod
 {
+    internal class Options
+    {
+        //internal SavedBool UseThousandthsUOM = new SavedBool("useThousandthsUOM", Settings.gameSettingsFile);
+    }
+
     public class ModInfo : IUserMod
     {
-        public const string Namespace = "com.github.rumkex.cargomod";
-        public const string NamespaceV1 = "com.github.rumkex.cargomod.vlk";
-        public readonly int version = 1;
+        // Whether its a UI component or other named entity we need to find or use, its prefix should start with this.
+        public const string NamespacePrefix = "TrackIt";
 
-        public string Name => "Cargo Info";
+        public string Name => "Track It!";
 
-        public string Description => "Displays statistics panel for Cargo Stations service view and allows monitoring cargo dynamics";
-
-        internal CargoData data;
+        public string Description => "Track and display statistics for various game entities (i.e. Cargo Stations, Vehicles, etc.)";
 
         internal Options Options = new Options();
 
-        internal static bool CleanCurrentData { get; set; }
-
         public void OnSettingsUI(UIHelperBase helper)
         {
-            var trucksCounterGroup = helper.AddGroup("Trucks counter");
-            trucksCounterGroup.AddCheckbox("Use months instead of weeks", Options.UseMonthlyValues, state => Options.UseMonthlyValues.value = state);
-
-            var dataUpdateGroup = helper.AddGroup("Update statistics interval\n\n" +
-                "Note: the original mod uses mounthly update in the \"Cargo Statistics\" window.\n" +
-                "Seems too long for the \"Real Time\" mod users.");
-            dataUpdateGroup.AddCheckbox("Use hourly update", Options.UpdateHourly, state => Options.UpdateHourly.value = state);
-
-            var settingsGroup = helper.AddGroup("Data Cleaning");
-            //helper.AddSpace(10);
-            settingsGroup.AddButton("Clean old data", () => { data.RemoveData(Namespace); });
-            settingsGroup.AddButton("Clean current data", () => { data.RemoveData(NamespaceV1); CleanCurrentData = true; });
+            //UIHelperBase trackingDisplayUnit = helper.AddGroup("Unit of Measure");
+            //trackingDisplayUnit.AddCheckbox("Use thousandths", Options.UseThousandthsUOM, state => Options.UseThousandthsUOM.value = state);
         }
 
         public void OnEnabled()
@@ -48,11 +37,5 @@ namespace CargoInfoMod
                 Patcher.UnpatchAll();
             }
         }
-    }
-
-    internal class Options
-    {
-        internal SavedBool UseMonthlyValues = new SavedBool("useMonthlyCargoValues", Settings.gameSettingsFile);
-        internal SavedBool UpdateHourly = new SavedBool("updateHourly", Settings.gameSettingsFile);
     }
 }

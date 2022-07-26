@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
+﻿using System.Collections.Generic;
 using ColossalFramework.Globalization;
-using ColossalFramework.Plugins;
 using ColossalFramework.UI;
 using UnityEngine;
 using CargoInfoMod.Data;
@@ -16,26 +13,16 @@ namespace CargoInfoMod
         private readonly Vector2 _labelSize = new Vector2(90, 20);
         private const int _statPanelHeight = 30;
         private readonly Vector2 _exitButtonSize = new Vector2(32, 32);
-        private readonly Vector2 _modeButtonSize = new Vector2(32, 10);
         private readonly Vector2 _chartSize = new Vector2(90, 90);
         private readonly RectOffset _padding = new RectOffset(2, 2, 2, 2);
         private readonly Color32 _unitColor = new Color32(206, 248, 0, 255);
 
-        private ModInfo _mod;
-
-        private bool _displayCurrent;
         private ushort _lastSelectedBuilding;
 
         private List<UICargoChart> _charts = new List<UICargoChart>();
         private List<UILabel> _labels = new List<UILabel>();
         private UILabel _windowLabel, _localLabel, _importLabel, _exportLabel, _rcvdLabel, _sentLabel;
-        private UIButton _resetButton, _modeButton;
         private UIPanel _sentPanel, _rcvdPanel;
-
-        public CargoUIPanel()
-        {
-            _mod = PluginManager.instance.FindPluginInfo(Assembly.GetExecutingAssembly()).userModInstance as ModInfo;
-        }
 
         public override void Awake()
         {
@@ -122,34 +109,6 @@ namespace CargoInfoMod
             sentStatPanel.autoLayoutStart = LayoutStart.TopRight;
             sentStatPanel.autoLayoutPadding = _padding;
 
-            _resetButton = UIUtils.CreateButton(sentStatPanel);
-            _resetButton.text = "Res";
-            _resetButton.textScale = 0.6f;
-            _resetButton.autoSize = false;
-            _resetButton.size = _modeButtonSize;
-
-            _resetButton.eventClicked += (sender, e) =>
-            {
-                if (!_mod.data.TryGetEntry(WorldInfoPanel.GetCurrentInstanceID().Building, out CargoStats2 stats)) return;
-                Array.Clear(stats.CarsCounted, 0, stats.CarsCounted.Length);
-            };
-
-            _modeButton = UIUtils.CreateButton(sentStatPanel);
-            _modeButton.text = "Prev";
-            _modeButton.textScale = 0.6f;
-            _modeButton.autoSize = false;
-            _modeButton.size = _modeButtonSize;
-
-            _modeButton.eventClicked += (sender, e) =>
-            {
-                _displayCurrent = !_displayCurrent;
-                _modeButton.text = _displayCurrent ? "Cur" : "Prev";
-                _modeButton.tooltip = _displayCurrent
-                    ? Localization.Get("SWITCH_MODES_TOOLTIP_CUR")
-                    : Localization.Get("SWITCH_MODES_TOOLTIP_PREV");
-                _modeButton.RefreshTooltip();
-            };
-
             InitializeCharts(sentStatPanel, rcvdStatPanel);
             FitChildren(new Vector2(_padding.top, _padding.left));
 
@@ -168,17 +127,13 @@ namespace CargoInfoMod
             _exportLabel.text = Localization.Get("EXPORT");
             _rcvdLabel.text = Localization.Get("RECEIVED");
             _sentLabel.text = Localization.Get("SENT");
-            _modeButton.tooltip = _displayCurrent ?
-                Localization.Get("SWITCH_MODES_TOOLTIP_CUR") :
-                Localization.Get("SWITCH_MODES_TOOLTIP_PREV");
-            _resetButton.tooltip = Localization.Get("RESET_COUNTERS_TOOLTIP");
 
             UpdateCounterValues();
         }
 
         public void UpdateCounterValues()
         {
-            if (_mod.data.TryGetEntry(_lastSelectedBuilding, out CargoStats2 stats) && _charts.Count > 0)
+            if (DataManager.instance.TryGetEntry(_lastSelectedBuilding, out CargoStats2 stats) && _charts.Count > 0)
             {
                 foreach (UICargoChart chart in _charts)
                 {
@@ -200,8 +155,6 @@ namespace CargoInfoMod
         public override void Update()
         {
             if (!isVisible) return;
-
-            if (_mod?.data == null) return;
 
             if (WorldInfoPanel.GetCurrentInstanceID().Building != 0)
                 _lastSelectedBuilding = WorldInfoPanel.GetCurrentInstanceID().Building;

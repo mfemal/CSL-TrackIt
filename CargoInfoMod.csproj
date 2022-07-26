@@ -71,10 +71,15 @@
     <Compile Include="CargoCounter.cs" />
     <Compile Include="CargoData.cs" />
     <Compile Include="CargoUIPanel.cs" />
+    <Compile Include="DataManager.cs" />
+    <Compile Include="GameEntityBuildingMonitor.cs" />
     <Compile Include="GameEntityDataExtractor.cs" />
+    <Compile Include="GameEntityThreadingExtension.cs" />
     <Compile Include="Localization.cs" />
     <Compile Include="LogUtil.cs" />
     <Compile Include="ModInfo.cs" />
+    <Compile Include="LoadingExtension.cs" />
+    <Compile Include="PersistenceExtension.cs" />
     <Compile Include="Patcher.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UICargoChart.cs" />

@@ -156,8 +156,6 @@ namespace CargoInfoMod.Data
     [Serializable]
     public class CargoStats2
     {
-        public int[] CarsCounted;
-
         /// <summary>
         /// List of resources sent by an entity.
         /// </summary>
@@ -282,14 +280,6 @@ namespace CargoInfoMod.Data
             {
                 s_resourcesReceived.Add(new TrackedResource(ts, resourceDestinationType, resourceType, amount));
             }
-        }
-
-        // In case the number of flags changes between versions
-        public CargoStats2 Upgrade()
-        {
-            var upgradedStats = new CargoStats2();
-            CarsCounted.CopyTo(upgradedStats.CarsCounted, 0);
-            return upgradedStats;
         }
 
         public override string ToString()

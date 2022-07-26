@@ -8,7 +8,7 @@ namespace CargoInfoMod
     // Class and methods must be static
     public static class Patcher
     {
-        private const string HarmonyId = "yourname.CargoInfoMod";
+        private const string _harmonyId = ModInfo.NamespacePrefix + ".Patcher.HarmonyId";
         private static bool s_patched = false;
 
         public static void PatchAll()
@@ -23,7 +23,7 @@ namespace CargoInfoMod
 #endif
 
             s_patched = true;
-            var harmony = new Harmony(HarmonyId);
+            Harmony harmony = new Harmony(_harmonyId);
             harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
 
@@ -34,8 +34,8 @@ namespace CargoInfoMod
                 return;
             }
 
-            var harmony = new Harmony(HarmonyId);
-            harmony.UnpatchAll(HarmonyId);
+            var harmony = new Harmony(_harmonyId);
+            harmony.UnpatchAll(_harmonyId);
             s_patched = false;
 #if DEBUG
             LogUtil.LogInfo("Reverted...");
@@ -58,8 +58,8 @@ namespace CargoInfoMod
         /// <param name="sourceBuilding">Source building ID for the transfer.</param>
         public static void Postfix(ushort vehicleID, ref Vehicle data, ushort sourceBuilding)
         {
-            var parcel = new CargoParcel(sourceBuilding, false, data.m_transferType, data.m_transferSize, data.m_flags);
-            CargoData.Instance.TrackIt(parcel);
+            var parcel = new CargoDescriptor(sourceBuilding, false, data.m_transferType, data.m_transferSize, data.m_flags);
+            DataManager.instance.TrackIt(parcel);
 #if DEBUG
             LogUtil.LogInfo($"SetSource Postfix vehicleID: {vehicleID} sourceBuilding: {sourceBuilding}");
 #endif
@@ -77,7 +77,7 @@ namespace CargoInfoMod
     public static class CargoTruckAIChangeVehicleTypePatch
     {
         // Custom state between Prefix and Postfix, must use static var (see: https://harmony.pardeike.net/articles/patching.html)
-        private static CargoParcel? s_cargoParcel;
+        private static CargoDescriptor? s_cargoParcel;
 
         /// <summary>
         /// Called by the CitiesHarmony wrapper (boformer). The data for this transfer is tracked so it can be recorded in Postfix.
@@ -98,7 +98,7 @@ namespace CargoInfoMod
             NetInfo info = NetManager.instance.m_segments.m_buffer[pathPos.m_segment].Info;
             ushort buildingID = BuildingManager.instance.FindBuilding(vector, 100f, info.m_class.m_service, ItemClass.SubService.None, Building.Flags.None, Building.Flags.None);
 
-            s_cargoParcel = new CargoParcel(buildingID, true, vehicleData.m_transferType, vehicleData.m_transferSize, vehicleData.m_flags);
+            s_cargoParcel = new CargoDescriptor(buildingID, true, vehicleData.m_transferType, vehicleData.m_transferSize, vehicleData.m_flags);
         }
 
         /// <summary>
@@ -115,8 +115,8 @@ namespace CargoInfoMod
             {
                 return;
             }
-            var parcel = (CargoParcel)s_cargoParcel;
-            CargoData.Instance.TrackIt(parcel);
+            var parcel = (CargoDescriptor)s_cargoParcel;
+            DataManager.instance.TrackIt(parcel);
 #if DEBUG
             LogUtil.LogInfo($"ChangeVehicleType Postfix vehicleID: {vehicleID} sourceBuilding: {parcel.building}");
 #endif
