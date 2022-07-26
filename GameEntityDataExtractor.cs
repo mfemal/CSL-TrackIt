@@ -70,6 +70,12 @@ namespace CargoInfoMod
             return resourceList ?? new List<TrackedResource>(0);
         }
 
+        internal static ResourceDestinationType GetVehicleResourceDestinationType(Vehicle.Flags flags)
+        {
+            return (flags & Vehicle.Flags.Exporting) != 0 ? ResourceDestinationType.Export :
+                (flags & Vehicle.Flags.Importing) != 0 ? ResourceDestinationType.Import : ResourceDestinationType.Local;
+        }
+
         /// <summary>
         /// Translate the game representation for the transfer type to the internal module version.
         /// </summary>

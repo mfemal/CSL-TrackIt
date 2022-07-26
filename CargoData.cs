@@ -14,128 +14,20 @@ namespace CargoInfoMod
 {
     public struct CargoParcel
     {
+        public ResourceDestinationType resourceDestinationType;
+        public bool incoming;
         public ushort building;
         public ushort transferSize;
-        public CarFlags flags;
         internal byte transferType;
-
-        public int ResourceType => ((flags & CarFlags.Resource) - CarFlags.Oil) / 0x10;
-
-        public static readonly CarFlags[] ResourceTypes =
-        {
-            CarFlags.Oil,
-            CarFlags.Petrol,
-            CarFlags.Ore,
-            CarFlags.Coal,
-            CarFlags.Logs,
-            CarFlags.Lumber,
-            CarFlags.Grain,
-            CarFlags.Food,
-            CarFlags.Goods,
-            CarFlags.Mail,
-            CarFlags.UnsortedMail,
-            CarFlags.SortedMail,
-            CarFlags.OutgoingMail,
-            CarFlags.IncomingMail,
-            CarFlags.AnimalProducts,
-            CarFlags.Flours,
-            CarFlags.Paper,
-            CarFlags.PlanedTimber,
-            CarFlags.Petroleum,
-            CarFlags.Plastics,
-            CarFlags.Glass,
-            CarFlags.Metals,
-            CarFlags.LuxuryProducts
-       };
 
         public CargoParcel(ushort buildingID, bool incoming, byte transferType, ushort transferSize, Vehicle.Flags flags)
         {
             this.transferType = transferType;
             this.transferSize = transferSize;
             this.building = buildingID;
-            this.flags = incoming ? CarFlags.None : CarFlags.Sent;
+            this.incoming = incoming;
 
-            if ((flags & Vehicle.Flags.Exporting) != 0)
-                this.flags |= CarFlags.Exported;
-            else if ((flags & Vehicle.Flags.Importing) != 0)
-                this.flags |= CarFlags.Imported;
-
-            switch ((TransferType)transferType)
-            {
-                case TransferType.Oil:
-                    this.flags |= CarFlags.Oil;
-                    break;
-                case TransferType.Ore:
-                    this.flags |= CarFlags.Ore;
-                    break;
-                case TransferType.Logs:
-                    this.flags |= CarFlags.Logs;
-                    break;
-                case TransferType.Grain:
-                    this.flags |= CarFlags.Grain;
-                    break;
-                case TransferType.Petrol:
-                    this.flags |= CarFlags.Petrol;
-                    break;
-                case TransferType.Coal:
-                    this.flags |= CarFlags.Coal;
-                    break;
-                case TransferType.Lumber:
-                    this.flags |= CarFlags.Lumber;
-                    break;
-                case TransferType.Food:
-                    this.flags |= CarFlags.Food;
-                    break;
-                case TransferType.Goods:
-                    this.flags |= CarFlags.Goods;
-                    break;
-                case TransferType.Mail:
-                    this.flags |= CarFlags.Mail;
-                    break;
-                case TransferType.UnsortedMail:
-                    this.flags |= CarFlags.UnsortedMail;
-                    break;
-                case TransferType.SortedMail:
-                    this.flags |= CarFlags.SortedMail;
-                    break;
-                case TransferType.OutgoingMail:
-                    this.flags |= CarFlags.OutgoingMail;
-                    break;
-                case TransferType.IncomingMail:
-                    this.flags |= CarFlags.IncomingMail;
-                    break;
-                case TransferType.AnimalProducts:
-                    this.flags |= CarFlags.AnimalProducts;
-                    break;
-                case TransferType.Flours:
-                    this.flags |= CarFlags.Flours;
-                    break;
-                case TransferType.Paper:
-                    this.flags |= CarFlags.Paper;
-                    break;
-                case TransferType.PlanedTimber:
-                    this.flags |= CarFlags.PlanedTimber;
-                    break;
-                case TransferType.Petroleum:
-                    this.flags |= CarFlags.Petroleum;
-                    break;
-                case TransferType.Plastics:
-                    this.flags |= CarFlags.Plastics;
-                    break;
-                case TransferType.Glass:
-                    this.flags |= CarFlags.Glass;
-                    break;
-                case TransferType.Metals:
-                    this.flags |= CarFlags.Metals;
-                    break;
-                case TransferType.LuxuryProducts:
-                    this.flags |= CarFlags.LuxuryProducts;
-                    break;
-                default:
-                    string transferTypeName = Enum.GetName(typeof(TransferType), transferType);
-                    LogUtil.LogError($"Unexpected transfer type: {transferTypeName}");
-                    break;
-            }
+            resourceDestinationType = GameEntityDataExtractor.GetVehicleResourceDestinationType(flags);
         }
     }
 
@@ -326,20 +218,6 @@ namespace CargoInfoMod
             }
         }
 
-        public void UpdateCounters()
-        {
-            foreach (var pair in cargoStatIndex)
-            {
-                for (var i = 0; i < pair.Value.CarsCounted.Length; i++)
-                {
-                    var previ = (int)((CarFlags)i | CarFlags.Previous);
-                    if (previ == i) continue;
-                    pair.Value.CarsCounted[previ] = pair.Value.CarsCounted[i];
-                    pair.Value.CarsCounted[i] = 0;
-                }
-            }
-        }
-
         public bool TryGetEntry(ushort building, out CargoStats2 stats)
         {
             return cargoStatIndex.TryGetValue(building, out stats);
@@ -362,20 +240,14 @@ namespace CargoInfoMod
 
             if (cargoStatIndex.TryGetValue(cargo.building, out CargoStats2 stats))
             {
-                stats.CarsCounted[(int)cargo.flags] += cargo.transferSize;
-
-                ResourceDestinationType resourceDestinationType =
-                    (cargo.flags & CarFlags.Imported) != 0 ? ResourceDestinationType.Import :
-                    (cargo.flags & CarFlags.Exported) != 0 ? ResourceDestinationType.Export :
-                    ResourceDestinationType.Local;
                 DateTime ts = SimulationManager.instance.m_currentGameTime.Date; // Ignore the time component
-                if ((cargo.flags & CarFlags.Sent) != 0)
+                if (!cargo.incoming)
                 {
-                    stats.TrackResourceSent(ts, resourceDestinationType, GameEntityDataExtractor.ConvertTransferType(cargo.transferType), cargo.transferSize);
+                    stats.TrackResourceSent(ts, cargo.resourceDestinationType, GameEntityDataExtractor.ConvertTransferType(cargo.transferType), cargo.transferSize);
                 }
                 else
                 {
-                    stats.TrackResourceReceived(ts, resourceDestinationType, GameEntityDataExtractor.ConvertTransferType(cargo.transferType), cargo.transferSize);
+                    stats.TrackResourceReceived(ts, cargo.resourceDestinationType, GameEntityDataExtractor.ConvertTransferType(cargo.transferType), cargo.transferSize);
                 }
             }
 

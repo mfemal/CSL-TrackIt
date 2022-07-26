@@ -128,7 +128,7 @@ namespace CargoInfoMod
                 (!mod.Options.UpdateHourly && lastReset < tempDateTime && tempDateTime.Day == 1))
             {
                 lastReset = tempDateTime;
-                mod.data.UpdateCounters();
+                //mod.data.UpdateCounters();
 #if DEBUG
                 LogUtil.LogInfo("Monthly counter values updated");
 #endif
