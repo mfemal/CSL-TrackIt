@@ -9,13 +9,17 @@ namespace TrackIt
         // The key for this mod in the savegame
         public const string PersistenceId = ModInfo.NamespacePrefix + "DataManager";
 
+        /// <summary>
+        /// Event Handler to attach to for receiving changes associated with cargo transfers with buildings
+        /// </summary>
+        public MonitoredDataEventHandler CargoBuildingChanged;
+
         private static readonly DataManager _instance = new DataManager();
         private static HashSet<int> _buildings;
         private static Dictionary<ushort, CargoStats2> _buildingsIndex;
         private static bool _initialized = false;
 
-        static DataManager()
-        {
+        private DataManager() {
             _buildings = new HashSet<int>();
             _buildingsIndex = new Dictionary<ushort, CargoStats2>();
         }
@@ -72,33 +76,44 @@ namespace TrackIt
         /// <param name="cargo">Cargo data transferred. If the building is not set (0), or no data is transferred it is ignored.</param>
         public void TrackIt(CargoDescriptor cargo)
         {
-            if (cargo.building == 0 ||
-                cargo.transferSize == 0 ||
-                !(BuildingManager.instance.m_buildings.m_buffer[cargo.building].Info.m_buildingAI is CargoStationAI))
+            if (cargo.BuildingID == 0 ||
+                cargo.TransferSize == 0 || // Ignore empty transefers, some internal game mechanics seem to make not doing this more complex in this mod
+                !(BuildingManager.instance.m_buildings.m_buffer[cargo.BuildingID].Info.m_buildingAI is CargoStationAI))
             {
                 return;
             }
 
-            if (_buildingsIndex.TryGetValue(cargo.building, out CargoStats2 stats))
+            if (_buildingsIndex.TryGetValue(cargo.BuildingID, out CargoStats2 stats))
             {
                 DateTime ts = SimulationManager.instance.m_currentGameTime.Date; // Ignore the time component
-                if (!cargo.incoming)
+                if (!cargo.Incoming)
                 {
-                    stats.TrackResourceSent(ts, cargo.resourceDestinationType, GameEntityDataExtractor.ConvertTransferType(cargo.transferType), cargo.transferSize);
+                    stats.TrackResourceSent(ts, cargo.ResourceDestionationType, GameEntityDataExtractor.ConvertTransferType(cargo.TransferType), cargo.TransferSize);
                 }
                 else
                 {
-                    stats.TrackResourceReceived(ts, cargo.resourceDestinationType, GameEntityDataExtractor.ConvertTransferType(cargo.transferType), cargo.transferSize);
+                    stats.TrackResourceReceived(ts, cargo.ResourceDestionationType, GameEntityDataExtractor.ConvertTransferType(cargo.TransferType), cargo.TransferSize);
                 }
-            }
-
+                OnCargoBuildingChanged(cargo.BuildingID);
 #if DEBUG
-            LogUtil.LogInfo($"Updated building: {cargo.building} stats: {{ {stats} }}");
+                LogUtil.LogInfo($"Tracked building change: {cargo.BuildingID} stats: {{ {stats} }}");
 #endif
+            }
         }
 
-        internal bool TryGetEntry(ushort building, out CargoStats2 stats)
+        /// <summary>
+        /// Get the cargo statistics associated with a building.
+        /// </summary>
+        /// <param name="building">Source building, 0 is considered invalid and no stats (null) is set.</param>
+        /// <param name="stats">The statistics associated with the build (if found in the index).</param>
+        /// <returns>True if the lookup occurred successfully based on the buildings tracked.</returns>
+        internal bool TryGetBuilding(ushort building, out CargoStats2 stats)
         {
+            if (building == 0)
+            {
+                stats = null;
+                return false;
+            }
             return _buildingsIndex.TryGetValue(building, out stats);
         }
 
@@ -134,6 +149,18 @@ namespace TrackIt
             _buildingsIndex.Clear();
  
             _initialized = false;
+        }
+
+        private void OnCargoBuildingChanged(ushort buildingID)
+        {
+            try
+            {
+                CargoBuildingChanged?.Invoke(new MonitoredDataChanged(buildingID));
+            }
+            catch (Exception e)
+            {
+                LogUtil.LogException(e);
+            }
         }
     }
 }

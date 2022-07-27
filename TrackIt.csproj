@@ -68,7 +68,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CargoCounter.cs" />
+    <Compile Include="WorldInfoPanelMonitor.cs" />
     <Compile Include="CargoDescriptor.cs" />
     <Compile Include="CargoUIPanel.cs" />
     <Compile Include="DataManager.cs" />
@@ -82,7 +82,7 @@
     <Compile Include="PersistenceExtension.cs" />
     <Compile Include="Patcher.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UICargoChart.cs" />
+    <Compile Include="CargoUIChart.cs" />
     <Compile Include="UIHelper.cs" />
     <Compile Include="UIUtils.cs" />
     <Compile Include="VehicleWorldInfoPanelMonitor.cs" />

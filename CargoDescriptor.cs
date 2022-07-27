@@ -5,22 +5,45 @@ namespace TrackIt
     /// <summary>
     /// Describes the summary of the contents of the cargo tracked. The details (i.e. bill of materials) are currently not tracked.
     /// </summary>
-    public struct CargoDescriptor
+    internal struct CargoDescriptor
     {
-        public ResourceDestinationType resourceDestinationType;
-        public bool incoming;
-        public ushort building;
-        public ushort transferSize;
-        internal byte transferType;
-
-        public CargoDescriptor(ushort buildingID, bool incoming, byte transferType, ushort transferSize, Vehicle.Flags flags)
+        internal ResourceDestinationType ResourceDestionationType
         {
-            this.transferType = transferType;
-            this.transferSize = transferSize;
-            this.building = buildingID;
-            this.incoming = incoming;
+            get;
+            private set;
+        }
 
-            resourceDestinationType = GameEntityDataExtractor.GetVehicleResourceDestinationType(flags);
+        internal bool Incoming
+        {
+            get;
+            private set;
+        }
+
+        internal ushort BuildingID
+        {
+            get;
+            private set;
+        }
+
+        internal ushort TransferSize
+        {
+            get;
+            private set;
+        }
+
+        internal byte TransferType
+        {
+            get;
+            private set;
+        }
+
+        internal CargoDescriptor(ushort buildingID, bool incoming, byte transferType, ushort transferSize, Vehicle.Flags flags)
+        {
+            TransferType = transferType;
+            TransferSize = transferSize;
+            BuildingID = buildingID;
+            Incoming = incoming;
+            ResourceDestionationType = GameEntityDataExtractor.GetVehicleResourceDestinationType(flags);
         }
     }
 }

@@ -34,7 +34,7 @@ namespace TrackIt
             {
                 if (!_cityServiceVehicleWorldInfoPanel.component.isVisible)
                 {
-                    _cachedVehicleID = 0;
+                    ResetCache();
                 }
                 else
                 {
@@ -75,6 +75,11 @@ namespace TrackIt
             {
                 LogUtil.LogError("CityServiceVehicleWorldInfoPanel not found!");
             }
+        }
+
+        private void ResetCache()
+        {
+            _cachedVehicleID = 0;
         }
 
         private void UpdateData()

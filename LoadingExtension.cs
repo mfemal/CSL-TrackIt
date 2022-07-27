@@ -10,7 +10,7 @@ namespace TrackIt
     /// <remarks>Using pause in game does not use this extension.</remarks>
     public class LoadingExtension : LoadingExtensionBase
     {
-        // Allowed modes for this mod, others are ignored and no initialization is run.
+        // Allowed modes for this mod, others are ignored and no initialization should be done.
         private LoadMode[] _allowedLoadModes = new LoadMode[] {
             LoadMode.NewGame,
             LoadMode.NewGameFromScenario,
@@ -38,10 +38,11 @@ namespace TrackIt
 
                 _rootObject = new GameObject(ModInfo.NamespacePrefix + "Manager");
                 _rootObject.AddComponent<VehicleWorldInfoPanelMonitor>();
+                _rootObject.AddComponent<WorldInfoPanelMonitor>();
             }
             catch (Exception e)
             {
-                Debug.LogException(e);
+                LogUtil.LogException(e);
             }
         }
 
@@ -59,12 +60,16 @@ namespace TrackIt
                 DataManager.instance.Clear();
                 if (_rootObject != null)
                 {
+                    foreach (Transform child in _rootObject.transform)
+                    {
+                        UnityEngine.Object.Destroy(child.gameObject);
+                    }
                     UnityEngine.Object.Destroy(_rootObject);
                 }
             }
             catch (Exception e)
             {
-                Debug.LogException(e);
+                LogUtil.LogException(e);
             }
         }
 

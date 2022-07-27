@@ -36,6 +36,23 @@ namespace TrackIt
                 .AsReadOnly();
         }
 
+        /// <summary>
+        /// As the game UI is refreshed or changed, this method faciliates extracting style info for this mod.
+        /// </summary>
+        /// <param name="source">Source label to copy style (text, scale, and font) from (if null, dest is ignored).</param>
+        /// <param name="dest">Destination label to copy style to (if null, method is a no-op).</param>
+        public static void CopyTextStyleAttributes(UILabel source, UILabel dest)
+        {
+            if (source == null || dest == null)
+            {
+                return;
+            }
+            dest.textScale = source.textScale;
+            dest.font = source.font;
+            dest.color = source.color;
+            dest.textColor = source.textColor;
+        }
+
         public static UIButton CreateButton(UIComponent parent)
         {
             UIButton button = parent.AddUIComponent<UIButton>();

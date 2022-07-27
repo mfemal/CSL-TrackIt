@@ -118,7 +118,7 @@ namespace TrackIt
             var parcel = (CargoDescriptor)s_cargoParcel;
             DataManager.instance.TrackIt(parcel);
 #if DEBUG
-            LogUtil.LogInfo($"ChangeVehicleType Postfix vehicleID: {vehicleID} sourceBuilding: {parcel.building}");
+            LogUtil.LogInfo($"ChangeVehicleType Postfix vehicleID: {vehicleID} sourceBuilding: {parcel.BuildingID}");
 #endif
             s_cargoParcel = null;
         }

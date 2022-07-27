@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="CargoStats.cs" />
     <Compile Include="CargoStatsExtensions.cs" />
+    <Compile Include="MonitoredDataChanged.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
