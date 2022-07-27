@@ -59,20 +59,20 @@ namespace TrackIt
         /// <summary>
         /// Extract the data for the chart based on the provided paramters
         /// </summary>
-        /// <param name="stats">The cargo statistics</param>
+        /// <param name="cargoStatistics">The cargo statistics determined from the index.</param>
         /// <param name="sent">Sent (true) or Received (false)</param>
         /// <param name="resourceDestinationType">The panel groups results by this value</param>
-        public int SetValues(CargoStats2 stats)
+        public int SetValues(CargoStatistics cargoStatistics)
         {
             IList<ResourceCategoryType> standardGroups = UIUtils.CargoBasicResourceGroups;
             float[] values = new float[standardGroups.Count];
-            int total = Sent ? stats.TotalResourcesSent(ResourceDestinationType) : stats.TotalResourcesReceived(ResourceDestinationType);
+            int total = Sent ? cargoStatistics.TotalResourcesSent(ResourceDestinationType) : cargoStatistics.TotalResourcesReceived(ResourceDestinationType);
             for (int i = 0; i < standardGroups.Count; i++) // preserve order for colors
             {
                 if (total > 0)
                 {
-                    values[i] = Sent ? stats.TotalResourcesSent(standardGroups[i], ResourceDestinationType) :
-                        stats.TotalResourcesReceived(standardGroups[i], ResourceDestinationType);
+                    values[i] = Sent ? cargoStatistics.TotalResourcesSent(standardGroups[i], ResourceDestinationType) :
+                        cargoStatistics.TotalResourcesReceived(standardGroups[i], ResourceDestinationType);
                     values[i] /= total;
                 }
                 else

@@ -41,10 +41,14 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CargoStats.cs" />
-    <Compile Include="CargoStatsExtensions.cs" />
+    <Compile Include="CargoStatistics.cs" />
+    <Compile Include="CargoExtensions.cs" />
     <Compile Include="MonitoredDataChanged.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ResourceCategoryType.cs" />
+    <Compile Include="ResourceDestinationType.cs" />
+    <Compile Include="ResourceType.cs" />
+    <Compile Include="TrackedResource.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

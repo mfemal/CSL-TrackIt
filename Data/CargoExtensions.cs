@@ -3,7 +3,7 @@
     /// <summary>
     /// Various extensions used for cargo tracking.
     /// </summary>
-    public static class CargoStatsExtensions
+    public static class CargoExtensions
     {
         /// <summary>
         /// Infer a category of data based on its resource type.

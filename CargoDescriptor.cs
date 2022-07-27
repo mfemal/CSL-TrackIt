@@ -7,7 +7,7 @@ namespace TrackIt
     /// </summary>
     internal struct CargoDescriptor
     {
-        internal ResourceDestinationType ResourceDestionationType
+        internal ResourceDestinationType ResourceDestinationType
         {
             get;
             private set;
@@ -43,7 +43,7 @@ namespace TrackIt
             TransferSize = transferSize;
             BuildingID = buildingID;
             Incoming = incoming;
-            ResourceDestionationType = GameEntityDataExtractor.GetVehicleResourceDestinationType(flags);
+            ResourceDestinationType = GameEntityDataExtractor.GetVehicleResourceDestinationType(flags);
         }
     }
 }

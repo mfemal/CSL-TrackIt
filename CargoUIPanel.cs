@@ -133,11 +133,11 @@ namespace TrackIt
 
         public void UpdateCounterValues()
         {
-            if (DataManager.instance.TryGetBuilding(_lastSelectedBuilding, out CargoStats2 stats) && _charts.Count > 0)
+            if (DataManager.instance.TryGetBuilding(_lastSelectedBuilding, out CargoStatistics cargoStatistics) && _charts.Count > 0)
             {
                 foreach (CargoUIChart chart in _charts)
                 {
-                    chart.SetValues(stats);
+                    chart.SetValues(cargoStatistics);
                 }
             }
         }

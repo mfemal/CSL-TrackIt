@@ -152,19 +152,19 @@ namespace TrackIt
             {
                 return;
             }
-            CargoStats2 stats;
-            if (DataManager.instance.TryGetBuilding(buildingID, out stats))
+            CargoStatistics cargoStatistics;
+            if (DataManager.instance.TryGetBuilding(buildingID, out cargoStatistics))
             {
                 StringBuilder sb = new StringBuilder();
                 sb.AppendFormat(
                     "{0}: {1:0}",
                     Localization.Get("TRUCKS_RCVD"),
-                    stats.CountResourcesReceived());
+                    cargoStatistics.CountResourcesReceived());
                 sb.AppendLine();
                 sb.AppendFormat(
                     "{0}: {1:0}",
                     Localization.Get("TRUCKS_SENT"),
-                    stats.CountResourcesSent());
+                    cargoStatistics.CountResourcesSent());
                 sb.AppendLine();
                 sb.Append(Localization.Get("CLICK_MORE"));
                 _buildingStatsLabel.text = sb.ToString();
