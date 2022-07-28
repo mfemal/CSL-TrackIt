@@ -6,7 +6,7 @@ namespace TrackIt
     /// Since a standard exists to monitor changes in the UI with buildings in-game, tap into it for monitoring the data
     /// associated with them held in internal data structures as changes occur (i.e. gamer adds a new building).
     /// </summary>
-    public class GameEntityBuildingMonitor : BuildingExtensionBase
+    public class GameEntityBuildingExtension : BuildingExtensionBase
     {
         public override void OnBuildingCreated(ushort buildingID)
         {
