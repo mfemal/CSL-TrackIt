@@ -72,7 +72,7 @@
     <Compile Include="CargoDescriptor.cs" />
     <Compile Include="CargoUIPanel.cs" />
     <Compile Include="DataManager.cs" />
-    <Compile Include="GameEntityBuildingMonitor.cs" />
+    <Compile Include="GameEntityBuildingExtension.cs" />
     <Compile Include="GameEntityDataExtractor.cs" />
     <Compile Include="GameEntityThreadingExtension.cs" />
     <Compile Include="Localization.cs" />

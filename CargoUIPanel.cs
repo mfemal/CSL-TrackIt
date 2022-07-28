@@ -13,25 +13,24 @@ namespace TrackIt
         private const int _panelWidth = 484;
         private const int _statPanelHeight = 30;
 
-        private const int _chartColumnWidth = 90;
-        private const int _rowLabelWidth = 120;
-        private readonly Vector2 _labelSize = new Vector2(_chartColumnWidth, 20);
-        private readonly Vector2 _chartSize = new Vector2(_chartColumnWidth, 90);
+        private const int _chartWidth = 90;
+        private readonly Vector2 _labelSize = new Vector2(_chartWidth, 20);
         private readonly RectOffset _padding = new RectOffset(10, 10, 10, 10);
         private readonly Color32 _unitColor = new Color32(206, 248, 0, 255);
 
         private List<CargoUIChart> _charts = new List<CargoUIChart>();
         private List<UILabel> _labels = new List<UILabel>();
-        private UILabel _localLabel, _importLabel, _exportLabel, _rcvdLabel, _sentLabel;
-        private UIPanel _sentPanel, _rcvdPanel;
+        private UILabel _columnLocalLabel, _columnImportLabel, _columnExportLabel;
+        private UILabel _rowReceivedLabel, _rowSentLabel;
+        private UIPanel _sentPanel, _receivedPanel;
 
         public void UpdateLocale()
         {
-            _localLabel.text = Localization.Get("LOCAL");
-            _importLabel.text = Localization.Get("IMPORT");
-            _exportLabel.text = Localization.Get("EXPORT");
-            _rcvdLabel.text = Localization.Get("RECEIVED");
-            _sentLabel.text = Localization.Get("SENT");
+            _columnLocalLabel.text = Localization.Get("LOCAL");
+            _columnImportLabel.text = Localization.Get("IMPORT");
+            _columnExportLabel.text = Localization.Get("EXPORT");
+            _rowReceivedLabel.text = Localization.Get("RECEIVED");
+            _rowSentLabel.text = Localization.Get("SENT");
         }
 
         public override void Start()
@@ -73,69 +72,15 @@ namespace TrackIt
             autoLayout = true;
             autoLayoutDirection = LayoutDirection.Vertical;
 
-            UIPanel summaryPanelHeader = UIUtils.CreatePanel(this, _namePrefix + "Header");
-            summaryPanelHeader.size = new Vector2(_panelWidth, _labelSize.y);
-            summaryPanelHeader.autoLayout = true;
-            summaryPanelHeader.autoLayoutDirection = LayoutDirection.Horizontal;
-            summaryPanelHeader.autoLayoutStart = LayoutStart.TopRight;
-            summaryPanelHeader.autoLayoutPadding = _padding;
+            UIPanel summaryPanelHeader = CreateUIHeaderPanel();
+            _columnLocalLabel = CreateUIColumnLabel(summaryPanelHeader, "LocalLabel", Localization.Get("LOCAL"));
+            _columnImportLabel = CreateUIColumnLabel(summaryPanelHeader, "ImportLabel", Localization.Get("IMPORT"));
+            _columnExportLabel = CreateUIColumnLabel(summaryPanelHeader, "ExportLabel", Localization.Get("EXPORT"));
 
-            _localLabel = UIUtils.CreateLabel(summaryPanelHeader, _namePrefix + "LocalLabel", Localization.Get("LOCAL"));
-            _localLabel.autoSize = false;
-            _localLabel.size = _labelSize;
-            _localLabel.textAlignment = UIHorizontalAlignment.Center;
+            UIPanel receivedPanel = CreateUIRowPanel("ReceivedPanel", ref _receivedPanel, "ReceivedChartsPanel", ref _rowReceivedLabel, "ReceivedLabel");
+            UIPanel sentPanel = CreateUIRowPanel("SentPanel", ref _sentPanel, "SentChartsPanel", ref _rowSentLabel, "SentLabel");
 
-            _importLabel = UIUtils.CreateLabel(summaryPanelHeader, _namePrefix + "ImportLabel", Localization.Get("IMPORT"));
-            _importLabel.autoSize = false;
-            _importLabel.size = _labelSize;
-            _importLabel.textAlignment = UIHorizontalAlignment.Center;
-
-            _exportLabel = UIUtils.CreateLabel(summaryPanelHeader, _namePrefix + "ExportLabel", Localization.Get("EXPORT"));
-            _exportLabel.autoSize = false;
-            _exportLabel.size = _labelSize;
-            _exportLabel.textAlignment = UIHorizontalAlignment.Center;
-
-            _rcvdPanel = UIUtils.CreatePanel(this, _namePrefix + "RcvdPanel");
-            _rcvdPanel.size = new Vector2(_panelWidth, _chartSize.y);
-            _rcvdPanel.autoLayout = true;
-            _rcvdPanel.autoLayoutDirection = LayoutDirection.Horizontal;
-            _rcvdPanel.autoLayoutStart = LayoutStart.TopRight;
-            _rcvdPanel.autoLayoutPadding = _padding;
-
-            _rcvdLabel = UIUtils.CreateLabel(_rcvdPanel, _namePrefix + "RcvdLabel", null);
-            _rcvdLabel.textAlignment = UIHorizontalAlignment.Right;
-            _rcvdLabel.verticalAlignment = UIVerticalAlignment.Middle;
-            _rcvdLabel.autoSize = false;
-            _rcvdLabel.size = new Vector2(_labelSize.x, _chartSize.y);
-
-            UIPanel rcvdStatPanel = UIUtils.CreatePanel(this, _namePrefix + "RcvdStatPanel");
-            rcvdStatPanel.size = new Vector2(_panelWidth, _statPanelHeight);
-            rcvdStatPanel.autoLayout = true;
-            rcvdStatPanel.autoLayoutDirection = LayoutDirection.Horizontal;
-            rcvdStatPanel.autoLayoutStart = LayoutStart.TopRight;
-            rcvdStatPanel.autoLayoutPadding = _padding;
-
-            _sentPanel = UIUtils.CreatePanel(this, _namePrefix + "SentPanel");
-            _sentPanel.size = new Vector2(_panelWidth, _chartSize.y);
-            _sentPanel.autoLayout = true;
-            _sentPanel.autoLayoutDirection = LayoutDirection.Horizontal;
-            _sentPanel.autoLayoutStart = LayoutStart.TopRight;
-            _sentPanel.autoLayoutPadding = _padding;
-
-            _sentLabel = UIUtils.CreateLabel(_sentPanel, _namePrefix + "SentLabel", null);
-            _sentLabel.textAlignment = UIHorizontalAlignment.Right;
-            _sentLabel.verticalAlignment = UIVerticalAlignment.Middle;
-            _sentLabel.autoSize = false;
-            _sentLabel.size = new Vector2(_labelSize.x, _chartSize.y);
-
-            UIPanel sentStatPanel = UIUtils.CreatePanel(this, _namePrefix + "SentStatPanel");
-            sentStatPanel.size = new Vector2(_panelWidth, _statPanelHeight);
-            sentStatPanel.autoLayout = true;
-            sentStatPanel.autoLayoutDirection = LayoutDirection.Horizontal;
-            sentStatPanel.autoLayoutStart = LayoutStart.TopRight;
-            sentStatPanel.autoLayoutPadding = _padding;
-
-            InitializeCharts(sentStatPanel, rcvdStatPanel);
+            InitializeCharts(sentPanel, receivedPanel);
             FitChildren(new Vector2(_padding.top, _padding.left));
 
             // Load the locale and update it if game locale changes
@@ -143,14 +88,61 @@ namespace TrackIt
             LocaleManager.eventLocaleChanged += UpdateLocale;
         }
 
+        private UILabel CreateUIColumnLabel(UIComponent parent, string name, string text)
+        {
+            UILabel label = UIUtils.CreateLabel(parent, _namePrefix + "LocalLabel", Localization.Get("LOCAL"));
+            label.autoSize = false;
+            label.size = _labelSize;
+            label.textAlignment = UIHorizontalAlignment.Center;
+            return label;
+        }
+
+        private UIPanel CreateUIHeaderPanel()
+        {
+            UIPanel summaryPanelHeader = UIUtils.CreatePanel(this, _namePrefix + "Header");
+            summaryPanelHeader.size = new Vector2(_panelWidth, _labelSize.y);
+            summaryPanelHeader.autoLayout = true;
+            summaryPanelHeader.autoLayoutDirection = LayoutDirection.Horizontal;
+            summaryPanelHeader.autoLayoutStart = LayoutStart.TopRight;
+            summaryPanelHeader.autoLayoutPadding = _padding;
+            return summaryPanelHeader;
+        }
+
+        private UIPanel CreateUIRowPanel(string name, ref UIPanel panel, string panelName, ref UILabel label, string labelName)
+        {
+            panel = UIUtils.CreatePanel(this, _namePrefix + panelName);
+            panel.size = new Vector2(_panelWidth, _chartWidth);
+            panel.autoLayout = true;
+            panel.autoLayoutDirection = LayoutDirection.Horizontal;
+            panel.autoLayoutStart = LayoutStart.TopRight;
+            panel.autoLayoutPadding = _padding;
+
+            label = UIUtils.CreateLabel(panel, _namePrefix + labelName, null);
+            label.textAlignment = UIHorizontalAlignment.Right;
+            label.verticalAlignment = UIVerticalAlignment.Middle;
+            label.autoSize = false;
+            label.size = new Vector2(_labelSize.x, _chartWidth);
+
+            UIPanel rowPanel = UIUtils.CreatePanel(this, _namePrefix + name);
+            rowPanel.size = new Vector2(_panelWidth, _statPanelHeight);
+            rowPanel.autoLayout = true;
+            rowPanel.autoLayoutDirection = LayoutDirection.Horizontal;
+            rowPanel.autoLayoutStart = LayoutStart.TopRight;
+            rowPanel.autoLayoutPadding = _padding;
+            return rowPanel;
+        }
+
         private void InitializeCharts(UIPanel sentStatPanel, UIPanel rcvdStatPanel)
         {
             CargoUIChart chart;
             UILabel label;
+            UIPanel parentPanel, chartPanel;
             for (int i = 0; i < 6; i++)
             {
-                chart = UIUtils.CreateCargoGroupedResourceChart(i > 2 ? _sentPanel : _rcvdPanel, _namePrefix + "GroupedResourceChart" + i);
-                label = UIUtils.CreateLabel(i > 2 ? sentStatPanel : rcvdStatPanel, _namePrefix + "GroupedResourceLabel" + i, null);
+                parentPanel = i > 2 ? _sentPanel : _receivedPanel;
+                chartPanel = i > 2 ? sentStatPanel : rcvdStatPanel;
+                chart = UIUtils.CreateCargoGroupedResourceChart(parentPanel, _namePrefix + parentPanel.name + "Chart" + i);
+                label = UIUtils.CreateLabel(chartPanel, chartPanel.name + "ChartLabel" + i, null);
                 label.autoSize = false;
                 label.size = new Vector2(chart.size.x, _statPanelHeight);
                 label.textScale = 0.8f;
