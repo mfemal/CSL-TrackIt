@@ -10,10 +10,9 @@ namespace TrackIt
     {
         private CityServiceWorldInfoPanel _cityServiceWorldInfoPanel;
         private ushort _cachedBuildingID;
-        private CargoUIPanel _cargoPanel;
-        private UILabel _buildingStatsLabel;
+        private CargoUIPanel _buildingCargoPanel;
+        private UILabel _buildingCargoLabel;
         private UIPanel _rightPanel;
-        private MouseEventHandler showDelegate;
 
         public void Start()
         {
@@ -49,17 +48,13 @@ namespace TrackIt
         public void OnDestroy()
         {
             DataManager.instance.CargoBuildingChanged -= UpdateBuilding;
-            if (_rightPanel != null)
+            if (_buildingCargoPanel != null)
             {
-                _rightPanel.eventClicked -= showDelegate;
+                Destroy(_buildingCargoPanel);
             }
-            if (_cargoPanel != null)
+            if (_buildingCargoLabel != null)
             {
-                Destroy(_cargoPanel);
-            }
-            if (_buildingStatsLabel != null)
-            {
-                Destroy(_buildingStatsLabel);
+                Destroy(_buildingCargoLabel);
             }
         }
 
@@ -73,36 +68,58 @@ namespace TrackIt
 
         private void CreateUI()
         {
-#if DEBUG
-            LogUtil.LogInfo("Setting up UI...");
-#endif
-            _cargoPanel = (CargoUIPanel)UIView.GetAView().AddUIComponent(typeof(CargoUIPanel));
-
             _cityServiceWorldInfoPanel = UIView.library.Get<CityServiceWorldInfoPanel>(typeof(CityServiceWorldInfoPanel).Name);
             if (_cityServiceWorldInfoPanel == null)
+            {
                 LogUtil.LogError("CityServiceWorldInfoPanel not found");
+            }
             _rightPanel = _cityServiceWorldInfoPanel?.Find<UIPanel>("Right");
             if (_rightPanel == null)
+            {
                 LogUtil.LogError("CityServiceWorldInfoPanel.Right panel not found");
+            }
             else
             {
-                UILabel descPanel = _rightPanel?.Find<UILabel>("Desc");
+                _buildingCargoLabel = UIUtils.CreateLabel(_rightPanel, "BuildingStatsTruckCounts", null);
+                _buildingCargoLabel.anchor = UIAnchorStyle.Bottom;
 
-                _buildingStatsLabel = UIUtils.CreateLabel(_rightPanel, "BuildingStats", null);
-                UIUtils.CopyTextStyleAttributes(descPanel, _buildingStatsLabel);
-                _buildingStatsLabel.anchor = UIAnchorStyle.Bottom;
-                showDelegate = (sender, e) =>
+                UILabel descPanel = _rightPanel?.Find<UILabel>("Desc");
+                if (descPanel != null)
                 {
-                    if (DataManager.instance.TryGetBuilding(WorldInfoPanel.GetCurrentInstanceID().Building, out _))
-                    {
-                        _cargoPanel.Show();
-                    }
-                };
-                _rightPanel.eventClicked += showDelegate;
+                    UIUtils.CopyTextStyleAttributes(descPanel, _buildingCargoLabel);
+                }
+                else
+                {
+                    LogUtil.LogError("Unable to find 'Desc' in CityServiceWorldInfoPanel, style detail not found.");
+                }
+
+                UIPanel mainSectionPanel = _cityServiceWorldInfoPanel.Find<UIPanel>("MainSectionPanel");
+                UIPanel mainBottom = _cityServiceWorldInfoPanel.Find<UIPanel>("MainBottom");
+                if (mainSectionPanel != null && mainBottom != null)
+                {
+                    _buildingCargoPanel = mainSectionPanel.AddUIComponent<CargoUIPanel>();
+                    _buildingCargoPanel.minimumSize = new Vector2(mainBottom.size.x, 300f);
+                    _buildingCargoPanel.width = mainBottom.size.x;
+                    _buildingCargoPanel.verticalSpacing = 20;
+                    _buildingCargoPanel.anchor = UIAnchorStyle.Left | UIAnchorStyle.Right;
+                    _buildingCargoPanel.zOrder = mainBottom.zOrder; // append this panel above the bottom one, all components are reordered in UIComponent
+                }
+                else
+                {
+                    LogUtil.LogError("Unable to find 'MainSectionPanel' or 'MainBottom' in CityServiceWorldInfoPanel, no charts available.");
+                }
                 DataManager.instance.CargoBuildingChanged += UpdateBuilding;
             }
         }
 
+        private bool IsInitialized()
+        {
+            return _buildingCargoLabel != null && _buildingCargoPanel != null;
+        }
+
+        /// <summary>
+        /// This method is for change detection so updates to the UI are done only when needed.
+        /// </summary>
         private void ResetCache()
         {
             _cachedBuildingID = 0;
@@ -120,35 +137,37 @@ namespace TrackIt
                 switch (instanceID.Type)
                 {
                     case InstanceType.Building:
-                        UpdateBuildingCargoStats(instanceID.Building);
+                        UpdateBuildingCargoStatistics(instanceID.Building);
                         break;
                     case InstanceType.Vehicle: // TODO: add feature
                     default: // skip all others
-                        SetBuildingCargoStatsVisibile(false);
+                        SetBuildingCargoVisible(false);
                         break;
                 }
             }
         }
 
-        private void SetBuildingCargoStatsVisibile(bool visible)
+        private void SetBuildingCargoVisible(bool visible)
         {
-            if (_buildingStatsLabel == null)
+            if (!IsInitialized())
             {
                 return;
             }
             if (visible)
             {
-                _buildingStatsLabel.Show();
+                _buildingCargoLabel.Show();
+                _buildingCargoPanel.Show();
             }
             else
             {
-                _buildingStatsLabel.Hide();
+                _buildingCargoLabel.Hide();
+                _buildingCargoPanel.Hide();
             }
         }
 
-        private void UpdateBuildingCargoStats(ushort buildingID)
+        private void UpdateBuildingCargoStatistics(ushort buildingID)
         {
-            if (buildingID == _cachedBuildingID || _buildingStatsLabel == null)
+            if (buildingID == _cachedBuildingID || !IsInitialized())
             {
                 return;
             }
@@ -165,17 +184,15 @@ namespace TrackIt
                     "{0}: {1:0}",
                     Localization.Get("TRUCKS_SENT"),
                     cargoStatistics.CountResourcesSent());
-                sb.AppendLine();
-                sb.Append(Localization.Get("CLICK_MORE"));
-                _buildingStatsLabel.text = sb.ToString();
-                _cachedBuildingID = buildingID;
-                SetBuildingCargoStatsVisibile(true);
+                _buildingCargoLabel.text = sb.ToString();
+                _buildingCargoPanel.UpdateCargoValues(cargoStatistics);
+                SetBuildingCargoVisible(true);
             }
             else
             {
-                ResetCache();
-                SetBuildingCargoStatsVisibile(false);
+                SetBuildingCargoVisible(false);
             }
+            _cachedBuildingID = buildingID;
         }
     }
 }

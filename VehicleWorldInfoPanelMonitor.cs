@@ -77,6 +77,14 @@ namespace TrackIt
             }
         }
 
+        private bool IsInitialized()
+        {
+            return _vehicleCargoChart != null;
+        }
+
+        /// <summary>
+        /// This method is for change detection so updates to the UI are done only when needed.
+        /// </summary>
         private void ResetCache()
         {
             _cachedVehicleID = 0;
@@ -85,29 +93,29 @@ namespace TrackIt
         private void UpdateData()
         {
             var vehicleID = WorldInfoPanel.GetCurrentInstanceID().Vehicle;
-            if (vehicleID != 0 && _vehicleCargoChart != null && _cachedVehicleID != vehicleID)
+            if (vehicleID == 0 || _cachedVehicleID == vehicleID || !IsInitialized())
             {
-                _cachedVehicleID = vehicleID;
-
-                IDictionary<ResourceCategoryType, int> vehicleCargoCategoryTotals = GameEntityDataExtractor.GetVehicleCargoBasicResourceTotals(vehicleID);
-                if (vehicleCargoCategoryTotals.Count != 0)
-                {
-#if DEBUG
-                    LogUtil.LogInfo("Vehicle Cargo Total: " +
-                        vehicleCargoCategoryTotals.Select(kv => kv.Value).ToList().Sum() +
-                        ", Groups: {" + vehicleCargoCategoryTotals.Select(kv => kv.Key + ": " + kv.Value).Aggregate((p, c) => p + ": " + c) + "}");
-#endif
-                    _vehicleCargoChart.SetValues(vehicleCargoCategoryTotals);
-                    _vehicleCargoChart.Show();
-                }
-                else
-                {
-#if DEBUG
-                    LogUtil.LogInfo("No cargo resources found for vehicle ${vehicleID}");
-#endif
-                    _vehicleCargoChart.Hide();
-                }
+                return;
             }
+            IDictionary<ResourceCategoryType, int> vehicleCargoCategoryTotals = GameEntityDataExtractor.GetVehicleCargoBasicResourceTotals(vehicleID);
+            if (vehicleCargoCategoryTotals.Count != 0)
+            {
+#if DEBUG
+                LogUtil.LogInfo("Vehicle Cargo Total: " +
+                    vehicleCargoCategoryTotals.Select(kv => kv.Value).ToList().Sum() +
+                    ", Groups: {" + vehicleCargoCategoryTotals.Select(kv => kv.Key + ": " + kv.Value).Aggregate((p, c) => p + ": " + c) + "}");
+#endif
+                _vehicleCargoChart.SetValues(vehicleCargoCategoryTotals);
+                _vehicleCargoChart.Show();
+            }
+            else
+            {
+#if DEBUG
+                LogUtil.LogInfo("No cargo resources found for vehicle ${vehicleID}");
+#endif
+                _vehicleCargoChart.Hide();
+            }
+            _cachedVehicleID = vehicleID;
         }
     }
 }

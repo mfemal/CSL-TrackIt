@@ -40,7 +40,7 @@ namespace TrackIt
                         break;
                 }
             }
-            SetValues(new float[standardGroups.Count]);
+            ResetValues();
         }
 
         /// <summary>
@@ -54,6 +54,11 @@ namespace TrackIt
             Sent = sent;
             ResourceDestinationType = resourceDestinationType;
             TotalLabel = totalLabel;
+        }
+
+        public void ResetValues()
+        {
+            SetValues(new float[UIUtils.CargoBasicResourceGroups.Count]);
         }
 
         /// <summary>

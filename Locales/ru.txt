@@ -1,5 +1,4 @@
-﻿CLICK_MORE	Нажмите, чтобы увидеть больше!
-TRUCKS_RCVD	грузовики получены
+﻿TRUCKS_RCVD	грузовики получены
 TRUCKS_SENT	комплект грузовых автомобилей
 KILO_UNITS	тыс. ед. Used in: "100k units"
 RECEIVED	Получено
@@ -7,4 +6,3 @@ SENT	Отдано
 LOCAL	Внутри
 IMPORT	Импорт
 EXPORT	Экспорт
-STATS_WINDOW_LABEL	Статистика грузов

@@ -1,5 +1,4 @@
-﻿CLICK_MORE	Click for more!
-KILO_UNITS	k units	Used like in "100k units"
+﻿KILO_UNITS	k units	Used like in "100k units"
 TRUCKS_RCVD	Trucks received
 TRUCKS_SENT	Trucks sent
 RECEIVED	Received
@@ -7,4 +6,3 @@ SENT	Sent
 LOCAL	Local
 IMPORT	Import
 EXPORT	Export
-STATS_WINDOW_LABEL	Cargo Statistics

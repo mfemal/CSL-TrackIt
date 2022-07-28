@@ -1,5 +1,4 @@
-﻿CLICK_MORE	Klicke für mehr!
-KILO_UNITS	k Einheiten
+﻿KILO_UNITS	k Einheiten
 TRUCKS_RCVD	LKWs erhalten
 TRUCKS_SENT	LKWs gesendet
 RECEIVED	Erhalten
@@ -7,4 +6,3 @@ SENT	Gesendet
 LOCAL	Lokal
 IMPORT	Import
 EXPORT	Export
-STATS_WINDOW_LABEL	Waren Statistik
