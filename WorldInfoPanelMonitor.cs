@@ -98,7 +98,7 @@ namespace TrackIt
                 if (mainSectionPanel != null && mainBottom != null)
                 {
                     _buildingCargoPanel = mainSectionPanel.AddUIComponent<CargoUIPanel>();
-                    _buildingCargoPanel.minimumSize = new Vector2(mainBottom.size.x, 300f);
+                    _buildingCargoPanel.minimumSize = new Vector2(mainBottom.size.x, 380f);
                     _buildingCargoPanel.width = mainBottom.size.x;
                     _buildingCargoPanel.verticalSpacing = 20;
                     _buildingCargoPanel.anchor = UIAnchorStyle.Left | UIAnchorStyle.Right;

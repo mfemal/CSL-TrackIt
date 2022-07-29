@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using UnityEngine;
 using TrackIt.API;
@@ -23,7 +24,7 @@ namespace TrackIt
             }
         }
 
-        // Resource categories to include in the radial chart (filtered to exclude )
+        // Resource categories to include in the radial chart (filtered to exclude None and unlicensed DLC)
         private static readonly IList<ResourceCategoryType> s_resourceCategories;
 
         static UIUtils()
@@ -31,6 +32,7 @@ namespace TrackIt
             // extract these once, they will never change
             s_resourceCategories = Enum.GetValues(typeof(ResourceCategoryType))
                 .Cast<ResourceCategoryType>()
+                .Where(t => IsResourceCategoryAvailable(t))
                 .Except(new List<ResourceCategoryType>() { ResourceCategoryType.None })
                 .ToList()
                 .AsReadOnly();
@@ -84,11 +86,26 @@ namespace TrackIt
             return cargoChart;
         }
 
-        public static UILabel CreateLabel(UIComponent parent, string name, string text)
+        /// <summary>
+        /// Create a label field from the provided parameters.
+        /// </summary>
+        /// <param name="parent">Parent component the label field is added to.</param>
+        /// <param name="name">Name of the label field to create (final name is constructed with a mod prefix).</param>
+        /// <param name="s">The localization key or text (key is preferred, lookup is done first using CollossalFramework.Globalization).</param>
+        /// <returns>The new label field constructed.</returns>
+        public static UILabel CreateLabel(UIComponent parent, string name, string s)
         {
             UILabel label = parent.AddUIComponent<UILabel>();
             label.name = ConstructModUIComponentName(name);
-            label.text = text;
+            if (!string.IsNullOrEmpty(s) && Locale.Exists(s))
+            {
+                label.isLocalized = true;
+                label.localeID = s;
+            }
+            else
+            {
+                label.text = s;
+            }
 
             return label;
         }
@@ -101,30 +118,33 @@ namespace TrackIt
             return panel;
         }
 
-        /// <summary>
-        /// Find a UIPanel component based on its name. The name can be determined by ILSpy or using mod tools. This method
-        /// is useful to perform lookups on named objects without traversing the UI tree of objects directly.
-        /// </summary>
-        /// <typeparam name="T">The type of the panel to find (class found in a code inspector)</typeparam>
-        /// <param name="name">The provided name of the panel.</param>
-        /// <returns>The UI panel found or null (if not found or not initialized).</returns>
-        public static UIPanel GetGameUIPanel<T>(string name)
+        public static UISprite CreateSprite(UIComponent parent, string name, string spriteName)
         {
-            if (name == null)
+            UISprite sprite = parent.AddUIComponent<UISprite>();
+            sprite.name = ConstructModUIComponentName(name);
+            sprite.spriteName = spriteName;
+
+            return sprite;
+        }
+
+        /// <summary>
+        /// Lookup a font based on its name.
+        /// </summary>
+        /// <param name="name">Name of the font (i.e. names used within UIDynamicFont)</param>
+        /// <remarks>Credit to keallu and Show It!</remarks>
+        /// <returns>Font reference if found (or null).</returns>
+        public static UIFont GetUIFont(string name)
+        {
+            UIFont[] fonts = Resources.FindObjectsOfTypeAll<UIFont>();
+            foreach (UIFont font in fonts)
             {
-                return null;
+                if (font.name.CompareTo(name) == 0)
+                {
+                    return font;
+                }
             }
-            GameObject o = GameObject.Find(name);
-            if (o == null)
-            {
-                return null;
-            }
-            T component = o.GetComponent<T>();
-            if (component == null || !(component is UIPanel))
-            {
-                return null;
-            }
-            return component as UIPanel;
+
+            return null;
         }
 
         /// <summary>
@@ -144,6 +164,36 @@ namespace TrackIt
                 return s;
             }
             return ModInfo.NamespacePrefix + s;
+        }
+
+        public static string GetLocaleID(ResourceCategoryType resourceCategoryType)
+        {
+            string key = null;
+            switch (resourceCategoryType)
+            {
+                case ResourceCategoryType.Agriculture:
+                    key = "INFO_CONNECTIONS_AGRICULTURE";
+                    break;
+                case ResourceCategoryType.Fish:
+                    key = "INFO_CONNECTIONS_FISH";
+                    break;
+                case ResourceCategoryType.Forestry:
+                    key = "INFO_CONNECTIONS_FORESTRY";
+                    break;
+                case ResourceCategoryType.Goods:
+                    key = "INFO_CONNECTIONS_GOODS";
+                    break;
+                case ResourceCategoryType.Mail:
+                    key = "INFO_CONNECTIONS_MAIL";
+                    break;
+                case ResourceCategoryType.Oil:
+                    key = "INFO_CONNECTIONS_OIL";
+                    break;
+                case ResourceCategoryType.Ore:
+                    key = "INFO_CONNECTIONS_ORE";
+                    break;
+            }
+            return key;
         }
 
         /// <summary>
@@ -185,6 +235,23 @@ namespace TrackIt
 
             // do not get colors from color sprites because they might not be initialized yet
             return TransferManager.instance.m_properties.m_resourceColors[transferReason];
+        }
+
+        /// <summary>
+        /// Checks if the given resource category type is available based on whether it has been purchased.
+        /// </summary>
+        /// <param name="resourceCategoryType">Resource category to check ('None' is not checked).</param>
+        /// <returns>True if a resource category can be tracked or used on the UI.</returns>
+        public static bool IsResourceCategoryAvailable(ResourceCategoryType resourceCategoryType)
+        {
+            if ((!SteamHelper.IsDLCOwned(SteamHelper.DLC.IndustryDLC) &&
+                    resourceCategoryType == ResourceCategoryType.Mail) ||
+                (!SteamHelper.IsDLCOwned(SteamHelper.DLC.UrbanDLC) &&
+                    resourceCategoryType == ResourceCategoryType.Fish)) // Sunset Harbor
+            {
+                return false;
+            }
+            return true;
         }
     }
 }

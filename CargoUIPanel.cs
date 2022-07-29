@@ -11,7 +11,9 @@ namespace TrackIt
     {
         private const string _namePrefix = "CargoPanel";
         private const int _panelWidth = 484;
-        private const int _statPanelHeight = 30;
+        private const int _chartPanelHeight = 30;
+        private const int _legendPanelHeight = 120;
+        private const float _labelTextScale = 0.8125f; // Game constant somewhere? value pulled from mod tools
 
         private const int _chartWidth = 90;
         private readonly Vector2 _labelSize = new Vector2(_chartWidth, 20);
@@ -63,14 +65,11 @@ namespace TrackIt
 
         private void CreateUI()
         {
-            if (name == null)
-            {
-                name = UIUtils.ConstructModUIComponentName(_namePrefix);
-            }
-
+            name = UIUtils.ConstructModUIComponentName(_namePrefix);
             width = _panelWidth;
             autoLayout = true;
             autoLayoutDirection = LayoutDirection.Vertical;
+            autoLayoutPadding = new RectOffset(10, 10, 4, 4);
 
             UIPanel summaryPanelHeader = CreateUIHeaderPanel();
             _columnLocalLabel = CreateUIColumnLabel(summaryPanelHeader, "LocalLabel", Localization.Get("LOCAL"));
@@ -81,7 +80,8 @@ namespace TrackIt
             UIPanel sentPanel = CreateUIRowPanel("SentPanel", ref _sentPanel, "SentChartsPanel", ref _rowSentLabel, "SentLabel");
 
             InitializeCharts(sentPanel, receivedPanel);
-            FitChildren(new Vector2(_padding.top, _padding.left));
+            InitializeLegend();
+            InitializeStyle();
 
             // Load the locale and update it if game locale changes
             UpdateLocale();
@@ -124,7 +124,7 @@ namespace TrackIt
             label.size = new Vector2(_labelSize.x, _chartWidth);
 
             UIPanel rowPanel = UIUtils.CreatePanel(this, _namePrefix + name);
-            rowPanel.size = new Vector2(_panelWidth, _statPanelHeight);
+            rowPanel.size = new Vector2(_panelWidth, _chartPanelHeight);
             rowPanel.autoLayout = true;
             rowPanel.autoLayoutDirection = LayoutDirection.Horizontal;
             rowPanel.autoLayoutStart = LayoutStart.TopRight;
@@ -144,7 +144,7 @@ namespace TrackIt
                 chart = UIUtils.CreateCargoGroupedResourceChart(parentPanel, _namePrefix + parentPanel.name + "Chart" + i);
                 label = UIUtils.CreateLabel(chartPanel, chartPanel.name + "ChartLabel" + i, null);
                 label.autoSize = false;
-                label.size = new Vector2(chart.size.x, _statPanelHeight);
+                label.size = new Vector2(chart.size.x, _chartPanelHeight);
                 label.textScale = 0.8f;
                 label.textColor = _unitColor;
                 label.textAlignment = UIHorizontalAlignment.Center;
@@ -173,6 +173,51 @@ namespace TrackIt
                 _labels.Add(label);
                 _charts.Add(chart);
             }
+        }
+
+        // TODO: resize this better based on non-English languages
+        private void InitializeLegend()
+        {
+            UIPanel legendPanel = UIUtils.CreatePanel(this, _namePrefix + "Legend");
+            legendPanel.width = _panelWidth - autoLayoutPadding.left - autoLayoutPadding.right;
+            legendPanel.autoLayout = true;
+            legendPanel.autoLayoutDirection = LayoutDirection.Vertical;
+            legendPanel.backgroundSprite = "GenericPanel";
+            legendPanel.height = _legendPanelHeight;
+            legendPanel.padding = new RectOffset(0, 0, 4, 4);
+
+            float legendPanelWidth = _panelWidth - autoLayoutPadding.left - autoLayoutPadding.right - legendPanel.padding.left - legendPanel.padding.right;
+            UILabel legendTitle = UIUtils.CreateLabel(legendPanel, _namePrefix + "LegendTitle", "INFO_LEGEND");
+            legendTitle.autoHeight = true;
+            legendTitle.font = UIUtils.GetUIFont("OpenSans-Regular");
+            legendTitle.textAlignment = UIHorizontalAlignment.Center;
+            legendTitle.width = legendPanelWidth;
+            legendTitle.textScale = 0.75f;
+
+            CargoUILegend legend = legendPanel.AddUIComponent<CargoUILegend>();
+            legend.autoLayoutPadding = _padding;
+            legend.width = legendPanelWidth;
+            legend.height = legendPanel.height - legendTitle.height - legendPanel.padding.top - legendPanel.padding.bottom;
+            legend.wrapLayout = true;
+        }
+
+        private void InitializeStyle()
+        {
+            UIFont font = UIUtils.GetUIFont("OpenSans-Semibold");
+            if (font == null)
+            {
+                return;
+            }
+            _columnLocalLabel.font = font;
+            _columnLocalLabel.textScale = _labelTextScale;
+            _columnImportLabel.font = font;
+            _columnImportLabel.textScale = _labelTextScale;
+            _columnExportLabel.font = font;
+            _columnExportLabel.textScale = _labelTextScale;
+            _rowReceivedLabel.font = font;
+            _rowReceivedLabel.textScale = _labelTextScale;
+            _rowSentLabel.font = font;
+            _rowSentLabel.textScale = _labelTextScale;
         }
     }
 }
