@@ -80,7 +80,7 @@ namespace TrackIt
         public static CargoUIChart CreateCargoGroupedResourceChart(UIComponent parent, string name)
         {
             CargoUIChart cargoChart = parent.AddUIComponent<CargoUIChart>();
-            cargoChart.name = ConstructModUIComponentName(name);
+            cargoChart.name = ConstructComponentName(name);
             cargoChart.spriteName = "PieChartBg";
             cargoChart.size = new Vector2(90, 90);
             return cargoChart;
@@ -96,15 +96,27 @@ namespace TrackIt
         public static UILabel CreateLabel(UIComponent parent, string name, string s)
         {
             UILabel label = parent.AddUIComponent<UILabel>();
-            label.name = ConstructModUIComponentName(name);
-            if (!string.IsNullOrEmpty(s) && Locale.Exists(s))
+            label.name = ConstructComponentName(name);
+
+            if (!string.IsNullOrEmpty(s))
             {
-                label.isLocalized = true;
-                label.localeID = s;
-            }
-            else
-            {
-                label.text = s;
+                if (Locale.Exists(s))
+                {
+                    label.isLocalized = true;
+                    label.localeID = s;
+                }
+                else
+                {
+                    string t = Localization.Get(s);
+                    if (!string.IsNullOrEmpty(t))
+                    {
+                        label.text = t;
+                    }
+                    else
+                    {
+                        label.text = s;
+                    }
+                }
             }
 
             return label;
@@ -113,7 +125,7 @@ namespace TrackIt
         public static UIPanel CreatePanel(UIComponent parent, string name)
         {
             UIPanel panel = parent.AddUIComponent<UIPanel>();
-            panel.name = ConstructModUIComponentName(name);
+            panel.name = ConstructComponentName(name);
 
             return panel;
         }
@@ -121,7 +133,7 @@ namespace TrackIt
         public static UISprite CreateSprite(UIComponent parent, string name, string spriteName)
         {
             UISprite sprite = parent.AddUIComponent<UISprite>();
-            sprite.name = ConstructModUIComponentName(name);
+            sprite.name = ConstructComponentName(name);
             sprite.spriteName = spriteName;
 
             return sprite;
@@ -153,9 +165,9 @@ namespace TrackIt
         /// </summary>
         /// <param name="s">Starting string (if null, null is returned) to prefix.</param>
         /// <returns>Null if s is null, otherwise a prefixed string using the namespace and the provided s.</returns>
-        public static string ConstructModUIComponentName(string s)
+        public static string ConstructComponentName(string s)
         {
-            if (s == null)
+            if (string.IsNullOrEmpty(s))
             {
                 return null;
             }

@@ -4,5 +4,3 @@ KILO_UNITS	тыс. ед. Used in: "100k units"
 RECEIVED	Получено
 SENT	Отдано
 LOCAL	Внутри
-IMPORT	Импорт
-EXPORT	Экспорт

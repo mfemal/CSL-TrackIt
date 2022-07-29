@@ -58,7 +58,7 @@ namespace TrackIt
 
         internal CargoUILegend()
         {
-            name = UIUtils.ConstructModUIComponentName(_namePrefix);
+            name = UIUtils.ConstructComponentName(_namePrefix);
             autoLayout = true;
             autoLayoutDirection = LayoutDirection.Horizontal;
 

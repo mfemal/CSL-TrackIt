@@ -4,5 +4,3 @@ TRUCKS_SENT	Trucks sent
 RECEIVED	Received
 SENT	Sent
 LOCAL	Local
-IMPORT	Import
-EXPORT	Export

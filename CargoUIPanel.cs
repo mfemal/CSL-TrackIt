@@ -29,8 +29,6 @@ namespace TrackIt
         public void UpdateLocale()
         {
             _columnLocalLabel.text = Localization.Get("LOCAL");
-            _columnImportLabel.text = Localization.Get("IMPORT");
-            _columnExportLabel.text = Localization.Get("EXPORT");
             _rowReceivedLabel.text = Localization.Get("RECEIVED");
             _rowSentLabel.text = Localization.Get("SENT");
         }
@@ -65,16 +63,16 @@ namespace TrackIt
 
         private void CreateUI()
         {
-            name = UIUtils.ConstructModUIComponentName(_namePrefix);
+            name = UIUtils.ConstructComponentName(_namePrefix);
             width = _panelWidth;
             autoLayout = true;
             autoLayoutDirection = LayoutDirection.Vertical;
             autoLayoutPadding = new RectOffset(10, 10, 4, 4);
 
             UIPanel summaryPanelHeader = CreateUIHeaderPanel();
-            _columnLocalLabel = CreateUIColumnLabel(summaryPanelHeader, "LocalLabel", Localization.Get("LOCAL"));
-            _columnImportLabel = CreateUIColumnLabel(summaryPanelHeader, "ImportLabel", Localization.Get("IMPORT"));
-            _columnExportLabel = CreateUIColumnLabel(summaryPanelHeader, "ExportLabel", Localization.Get("EXPORT"));
+            _columnLocalLabel = CreateUIColumnLabel(summaryPanelHeader, "LocalLabel", "LOCAL");
+            _columnImportLabel = CreateUIColumnLabel(summaryPanelHeader, "ImportLabel", "INFO_CONNECTIONS_IMPORT");
+            _columnExportLabel = CreateUIColumnLabel(summaryPanelHeader, "ExportLabel", "INFO_CONNECTIONS_EXPORT");
 
             UIPanel receivedPanel = CreateUIRowPanel("ReceivedPanel", ref _receivedPanel, "ReceivedChartsPanel", ref _rowReceivedLabel, "ReceivedLabel");
             UIPanel sentPanel = CreateUIRowPanel("SentPanel", ref _sentPanel, "SentChartsPanel", ref _rowSentLabel, "SentLabel");
@@ -88,9 +86,9 @@ namespace TrackIt
             LocaleManager.eventLocaleChanged += UpdateLocale;
         }
 
-        private UILabel CreateUIColumnLabel(UIComponent parent, string name, string text)
+        private UILabel CreateUIColumnLabel(UIComponent parent, string name, string localeID)
         {
-            UILabel label = UIUtils.CreateLabel(parent, _namePrefix + "LocalLabel", Localization.Get("LOCAL"));
+            UILabel label = UIUtils.CreateLabel(parent, _namePrefix + name, localeID);
             label.autoSize = false;
             label.size = _labelSize;
             label.textAlignment = UIHorizontalAlignment.Center;

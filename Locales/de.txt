@@ -4,5 +4,3 @@ TRUCKS_SENT	LKWs gesendet
 RECEIVED	Erhalten
 SENT	Gesendet
 LOCAL	Lokal
-IMPORT	Import
-EXPORT	Export
