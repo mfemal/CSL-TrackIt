@@ -8,8 +8,11 @@ namespace TrackIt
 {
     public class WorldInfoPanelMonitor : MonoBehaviour
     {
+        private const string _namePrefix = "WorldInfoPanel";
         private CityServiceWorldInfoPanel _cityServiceWorldInfoPanel;
         private ushort _cachedBuildingID;
+        private UIPanel _containerPanel; // main top-level container
+        private Vector2 _containerPadding = new Vector2(4, 4);
         private CargoUIPanel _buildingCargoPanel;
         private UILabel _buildingCargoLabel;
         private UIPanel _rightPanel;
@@ -47,14 +50,10 @@ namespace TrackIt
 
         public void OnDestroy()
         {
-            DataManager.instance.CargoBuildingChanged -= UpdateBuilding;
-            if (_buildingCargoPanel != null)
+            if (_containerPanel != null)
             {
-                Destroy(_buildingCargoPanel);
-            }
-            if (_buildingCargoLabel != null)
-            {
-                Destroy(_buildingCargoLabel);
+                DataManager.instance.CargoBuildingChanged -= UpdateBuilding;
+                Destroy(_containerPanel);
             }
         }
 
@@ -80,9 +79,20 @@ namespace TrackIt
             }
             else
             {
-                _buildingCargoLabel = UIUtils.CreateLabel(_rightPanel, "BuildingStatsTruckCounts", null);
-                _buildingCargoLabel.anchor = UIAnchorStyle.Bottom;
+                UIPanel mainSectionPanel = _cityServiceWorldInfoPanel.Find<UIPanel>("MainSectionPanel");
+                UIPanel mainBottom = _cityServiceWorldInfoPanel.Find<UIPanel>("MainBottom");
+                if (mainSectionPanel == null || mainBottom == null)
+                {
+                    LogUtil.LogError("Unable to find 'MainSectionPanel' or 'MainBottom' in CityServiceWorldInfoPanel, no charts available.");
+                    return;
+                }
+                _containerPanel = UIUtils.CreateWorldInfoCompanionPanel(_cityServiceWorldInfoPanel.component, _namePrefix, "SubcategoriesPanel");
+                _containerPanel.autoLayout = true;
+                _containerPanel.autoLayoutDirection = LayoutDirection.Vertical;
+                _containerPanel.autoLayoutPadding = new RectOffset(6, 6, 6, 6);
+                _containerPanel.width = _containerPanel.parent.width;
 
+                _buildingCargoLabel = UIUtils.CreateLabel(_containerPanel, "BuildingTruckTotals", null);
                 UILabel descPanel = _rightPanel?.Find<UILabel>("Desc");
                 if (descPanel != null)
                 {
@@ -90,31 +100,29 @@ namespace TrackIt
                 }
                 else
                 {
-                    LogUtil.LogError("Unable to find 'Desc' in CityServiceWorldInfoPanel, style detail not found.");
+                    LogUtil.LogError("Unable to find 'Desc' in CityServiceWorldInfoPanel, style detail not found (using defaults).");
                 }
 
-                UIPanel mainSectionPanel = _cityServiceWorldInfoPanel.Find<UIPanel>("MainSectionPanel");
-                UIPanel mainBottom = _cityServiceWorldInfoPanel.Find<UIPanel>("MainBottom");
-                if (mainSectionPanel != null && mainBottom != null)
-                {
-                    _buildingCargoPanel = mainSectionPanel.AddUIComponent<CargoUIPanel>();
-                    _buildingCargoPanel.minimumSize = new Vector2(mainBottom.size.x, 380f);
-                    _buildingCargoPanel.width = mainBottom.size.x;
-                    _buildingCargoPanel.verticalSpacing = 20;
-                    _buildingCargoPanel.anchor = UIAnchorStyle.Left | UIAnchorStyle.Right;
-                    _buildingCargoPanel.zOrder = mainBottom.zOrder; // append this panel above the bottom one, all components are reordered in UIComponent
-                }
-                else
-                {
-                    LogUtil.LogError("Unable to find 'MainSectionPanel' or 'MainBottom' in CityServiceWorldInfoPanel, no charts available.");
-                }
+                _buildingCargoPanel = _containerPanel.AddUIComponent<CargoUIPanel>();
+                _buildingCargoPanel.width = mainBottom.size.x - (_containerPanel.autoLayoutPadding.left + _containerPanel.autoLayoutPadding.right);
+                _buildingCargoPanel.verticalSpacing = 20;
+
+                // TODO: handle with configuration BottomLeft if conflicts from other mods
+                // TODO: change width to either be same as panel width itself (bottom) or trimmed (right)
+                _containerPanel.AlignTo(_cityServiceWorldInfoPanel.component, UIAlignAnchor.TopRight);
+                _containerPanel.relativePosition = new Vector3(_containerPanel.parent.width + 5f,
+                    _cityServiceWorldInfoPanel.Find<UIPanel>("CaptionPanel")?.height ?? 0f);
+                _containerPanel.height = _buildingCargoLabel.height + _buildingCargoPanel.height +
+                    _buildingCargoPanel.verticalSpacing +
+                    _containerPanel.autoLayoutPadding.top + _containerPanel.autoLayoutPadding.bottom;
+
                 DataManager.instance.CargoBuildingChanged += UpdateBuilding;
             }
         }
 
         private bool IsInitialized()
         {
-            return _buildingCargoLabel != null && _buildingCargoPanel != null;
+            return _containerPanel != null;
         }
 
         /// <summary>
@@ -151,13 +159,11 @@ namespace TrackIt
         {
             if (visible)
             {
-                _buildingCargoLabel.Show();
-                _buildingCargoPanel.Show();
+                _containerPanel.Show();
             }
             else
             {
-                _buildingCargoLabel.Hide();
-                _buildingCargoPanel.Hide();
+                _containerPanel.Hide();
             }
         }
 

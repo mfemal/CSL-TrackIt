@@ -10,7 +10,7 @@ namespace TrackIt
     class CargoUIPanel : UIPanel
     {
         private const string _namePrefix = "CargoPanel";
-        private const int _panelWidth = 484;
+        private const int _panelWidth = 472;
         private const int _chartPanelHeight = 30;
         private const int _legendPanelHeight = 120;
         private const float _labelTextScale = 0.8125f; // Game constant somewhere? value pulled from mod tools
