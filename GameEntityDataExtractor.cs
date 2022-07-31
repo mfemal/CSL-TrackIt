@@ -1,6 +1,9 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Text;
+using ColossalFramework;
 using TrackIt.API;
 
 using TransferType = TransferManager.TransferReason;
@@ -16,10 +19,11 @@ namespace TrackIt
         /// Extract and group (based on ResourceCategoryType) the vehicle cargo.
         /// </summary>
         /// <param name="sourceVehicleID">The source vehicle id (i.e. selected from the UI) to obtain the cargo from. Must be a valid value.</param>
+        /// <param name="leadingVehicleID">Leading vehicle ID (if found).</param>
         /// <returns>The grouped list of values (sum) based on ResourceCargoType.</returns>
-        internal static IDictionary<ResourceCategoryType, int> GetVehicleCargoBasicResourceTotals(ushort sourceVehicleID)
+        internal static IDictionary<ResourceCategoryType, int> GetVehicleCargoBasicResourceTotals(ushort sourceVehicleID, out ushort leadingVehicleID)
         {
-            IList<TrackedResource> cargoResourceList = GetVehicleCargoResources(sourceVehicleID);
+            IList<TrackedResource> cargoResourceList = GetVehicleCargoResources(sourceVehicleID, out leadingVehicleID);
             if (cargoResourceList.Count == 0)
             {
                 return new Dictionary<ResourceCategoryType, int>(0);
@@ -39,35 +43,53 @@ namespace TrackIt
         /// </summary>
         /// <param name="sourceVehicleID">The source vehicle id (i.e. selected from the UI) to obtain the cargo from. Must be a valid value.</param>
         /// <returns>Ordered list of tracked resources (starts with lead vehicle if appropriate - i.e. train). List may be empty but never null.</returns>
-        internal static IList<TrackedResource> GetVehicleCargoResources(ushort sourceVehicleID)
+        internal static IList<TrackedResource> GetVehicleCargoResources(ushort sourceVehicleID, out ushort leadingVehicleID)
         {
             IList<TrackedResource> resourceList = null;
-            ushort leadingVehicleID = sourceVehicleID;
-
-            while (VehicleManager.instance.m_vehicles.m_buffer[leadingVehicleID].m_leadingVehicle != 0)
+            VehicleManager vehicleManager = Singleton<VehicleManager>.instance;
+            leadingVehicleID = vehicleManager.m_vehicles.m_buffer[sourceVehicleID].GetFirstVehicle(sourceVehicleID);
+            if (leadingVehicleID != 0)
             {
-                leadingVehicleID = VehicleManager.instance.m_vehicles.m_buffer[leadingVehicleID].m_leadingVehicle;
-            }
-
-            Vehicle leadVehicle = VehicleManager.instance.m_vehicles.m_buffer[leadingVehicleID];
-            VehicleAI vehicleAI = leadVehicle.Info.m_vehicleAI;
-            if (vehicleAI is CargoTrainAI || vehicleAI is CargoShipAI) // vehicleAI is CarTrailerAI || vehicleAI is CargoTruckAI
-            {
-                resourceList = new List<TrackedResource>();
-                Vehicle cargoVehicle;
-                ushort c = leadVehicle.m_firstCargo;
-                DateTime now = SimulationManager.instance.m_currentGameTime;
-                while (c != 0)
+                Vehicle leadingVehicle = vehicleManager.m_vehicles.m_buffer[leadingVehicleID];
+                VehicleAI vehicleAI = leadingVehicle.Info.m_vehicleAI;
+                if (vehicleAI is CargoTrainAI || vehicleAI is CargoShipAI) // vehicleAI is CarTrailerAI || vehicleAI is CargoTruckAI
                 {
-                    cargoVehicle = VehicleManager.instance.m_vehicles.m_buffer[c];
-                    resourceList.Add(new TrackedResource(now,
-                        ResourceDestinationType.Local,
-                        ConvertTransferType(cargoVehicle.m_transferType),
-                        cargoVehicle.m_transferSize));
-                    c = cargoVehicle.m_nextCargo;
+                    resourceList = new List<TrackedResource>();
+                    Vehicle cargoVehicle;
+                    ushort c = leadingVehicle.m_firstCargo;
+                    DateTime now = SimulationManager.instance.m_currentGameTime;
+                    while (c != 0)
+                    {
+                        cargoVehicle = vehicleManager.m_vehicles.m_buffer[c];
+                        resourceList.Add(new TrackedResource(now,
+                            ResourceDestinationType.Local,
+                            ConvertTransferType(cargoVehicle.m_transferType),
+                            cargoVehicle.m_transferSize));
+                        c = cargoVehicle.m_nextCargo < VehicleManager.MAX_VEHICLE_COUNT ? cargoVehicle.m_nextCargo : (ushort)0;
+                    }
                 }
             }
             return resourceList ?? new List<TrackedResource>(0);
+        }
+
+        internal static bool IsLeadingVehicle(ushort vehicleID)
+        {
+            return (vehicleID != 0 && vehicleID < VehicleManager.MAX_VEHICLE_COUNT) ?
+                Singleton<VehicleManager>.instance.m_vehicles.m_buffer[vehicleID].m_leadingVehicle == 0 :
+                false;
+        }
+
+        // TODO: enhance this, JSON? something printable
+        internal static string Stringify(object o)
+        {
+            StringBuilder s = new StringBuilder();
+            foreach (PropertyDescriptor descriptor in TypeDescriptor.GetProperties(o))
+            {
+                s.Append(descriptor.Name);
+                s.Append(": ");
+                s.Append(descriptor.GetValue(o));
+            }
+            return s.ToString();
         }
 
         internal static ResourceDestinationType GetVehicleResourceDestinationType(Vehicle.Flags flags)

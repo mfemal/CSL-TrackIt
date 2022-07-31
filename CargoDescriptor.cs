@@ -39,10 +39,10 @@ namespace TrackIt
 
         internal CargoDescriptor(ushort buildingID, bool incoming, byte transferType, ushort transferSize, Vehicle.Flags flags)
         {
-            TransferType = transferType;
-            TransferSize = transferSize;
             BuildingID = buildingID;
             Incoming = incoming;
+            TransferType = transferType;
+            TransferSize = transferSize;
             ResourceDestinationType = GameEntityDataExtractor.GetVehicleResourceDestinationType(flags);
         }
     }

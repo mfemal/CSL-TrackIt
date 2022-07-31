@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ColossalFramework;
 using TrackIt.API;
 
 namespace TrackIt
@@ -13,6 +14,11 @@ namespace TrackIt
         /// Event Handler to attach to for receiving changes associated with cargo transfers with buildings
         /// </summary>
         public MonitoredDataEventHandler CargoBuildingChanged;
+
+        /// <summary>
+        /// Event Handler to attach to for receiving changes associated with cargo transfers with vehicles
+        /// </summary>
+        public MonitoredDataEventHandler CargoVehicleChanged;
 
         /// <summary>
         /// Buildings that are tracked. This set is initialized from the prefabs and as a game runs, additions or
@@ -80,34 +86,45 @@ namespace TrackIt
         }
 
         /// <summary>
-        /// Track the inbound cargo data transfer. If for some reason the building cannot be found internally, it is ignored.
+        /// Track a cargo data transfer. If for some reason the building cannot be found internally, it is ignored.
         /// When buildings are added or removed within the game, this mod's listeners will normally update internal data
-        /// structures appropriately.
+        /// structures appropriately. If the vehicle is set, an event is triggered for an listeners.
         /// </summary>
-        /// <param name="cargo">Cargo data transferred. If the building is not set (0), or no data is transferred it is ignored.</param>
-        public void TrackIt(CargoDescriptor cargo)
+        /// <param name="cargoDescriptor">Descriptor for the data transferred.</param>
+        public void TrackIt(CargoDescriptor cargoDescriptor)
         {
-            if (cargo.BuildingID == 0 ||
-                cargo.TransferSize == 0 || // Ignore empty transefers, some internal game mechanics seem to make not doing this more complex in this mod
-                !(BuildingManager.instance.m_buildings.m_buffer[cargo.BuildingID].Info.m_buildingAI is CargoStationAI))
+            // Ignore empty transefers, some internal game mechanics seem to make not doing this more complex in this mod
+            if (cargoDescriptor.BuildingID == 0 || cargoDescriptor.TransferSize == 0)
+            {
+                return;
+            }
+            ushort buildingID = cargoDescriptor.BuildingID;
+            BuildingManager buildingManager = Singleton<BuildingManager>.instance;
+            if (!(buildingManager.m_buildings.m_buffer[buildingID].Info.m_buildingAI is CargoStationAI))
             {
                 return;
             }
 
-            if (_trackedBuildingIndex.TryGetValue(cargo.BuildingID, out CargoStatistics cargoStatistics))
+            if (_trackedBuildingIndex.TryGetValue(cargoDescriptor.BuildingID, out CargoStatistics cargoStatistics))
             {
                 DateTime ts = SimulationManager.instance.m_currentGameTime.Date; // Ignore the time component
-                if (!cargo.Incoming)
+                if (!cargoDescriptor.Incoming)
                 {
-                    cargoStatistics.TrackResourceSent(ts, cargo.ResourceDestinationType, GameEntityDataExtractor.ConvertTransferType(cargo.TransferType), cargo.TransferSize);
+                    cargoStatistics.TrackResourceSent(ts,
+                        cargoDescriptor.ResourceDestinationType,
+                        GameEntityDataExtractor.ConvertTransferType(cargoDescriptor.TransferType),
+                        cargoDescriptor.TransferSize);
                 }
                 else
                 {
-                    cargoStatistics.TrackResourceReceived(ts, cargo.ResourceDestinationType, GameEntityDataExtractor.ConvertTransferType(cargo.TransferType), cargo.TransferSize);
+                    cargoStatistics.TrackResourceReceived(ts,
+                        cargoDescriptor.ResourceDestinationType,
+                        GameEntityDataExtractor.ConvertTransferType(cargoDescriptor.TransferType),
+                        cargoDescriptor.TransferSize);
                 }
-                OnCargoBuildingChanged(cargo.BuildingID);
+                OnCargoBuildingChanged(cargoDescriptor.BuildingID);
 #if DEBUG
-                LogUtil.LogInfo($"Tracked building change: {cargo.BuildingID} cargo statistics: {{ {cargoStatistics} }}");
+                LogUtil.LogInfo($"Tracked cargo buildingID: {cargoDescriptor.BuildingID} statistics: {{ {cargoStatistics} }}");
 #endif
             }
         }
@@ -167,6 +184,19 @@ namespace TrackIt
             try
             {
                 CargoBuildingChanged?.Invoke(new MonitoredDataChanged(buildingID));
+            }
+            catch (Exception e)
+            {
+                LogUtil.LogException(e);
+            }
+        }
+
+        // TODO: implement
+        private void OnCargoVehicleChanged(ushort vehicleID)
+        {
+            try
+            {
+                CargoVehicleChanged?.Invoke(new MonitoredDataChanged(vehicleID));
             }
             catch (Exception e)
             {

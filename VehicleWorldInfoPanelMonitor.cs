@@ -22,6 +22,7 @@ namespace TrackIt
 
         private CityServiceVehicleWorldInfoPanel _cityServiceVehicleWorldInfoPanel;
         private ushort _cachedVehicleID;
+        private ushort _cachedLeadingVehicleID;
 
         private const string _namePrefix = "VehicleWorldInfoPanel";
         private const int _chartWidth = 60;
@@ -33,6 +34,15 @@ namespace TrackIt
         private Vector2 _vehicleCargoPadding = new Vector2(8, 8);
         private CargoUIChart _vehicleCargoChart; // grouped category resource chart within _vehicleCargoPanel
         private IList<TrackingRow> _vehicleCargoContents; // internal map whose offset matches index in UIUtils.CargoBasicResourceGroups
+
+        public void OnDestroy()
+        {
+            if (_containerPanel != null)
+            {
+                DataManager.instance.CargoVehicleChanged -= UpdateVehicle;
+                Destroy(_containerPanel);
+            }
+        }
 
         public void Start()
         {
@@ -54,7 +64,7 @@ namespace TrackIt
                 {
                     ResetCache();
                 }
-                else
+                else if (IsInitialized())
                 {
                     UpdateData();
                 }
@@ -65,11 +75,11 @@ namespace TrackIt
             }
         }
 
-        public void OnDestroy()
+        public void UpdateVehicle(MonitoredDataChanged monitoredDataChanged)
         {
-            if (_containerPanel != null)
+            if (monitoredDataChanged.sourceID == _cachedVehicleID)
             {
-                Destroy(_containerPanel);
+                ResetCache();
             }
         }
 
@@ -132,8 +142,6 @@ namespace TrackIt
                 trackingRow.Description.width = 80;
                 trackingRow.Description.autoHeight = true;
                 trackingRow.ProgressBar.width = loadProgressBar?.width ?? 293;
-                trackingRow.ProgressBar.minValue = 0;   // scale as a percent value
-                trackingRow.ProgressBar.maxValue = 100;
 
                 _vehicleCargoContents.Add(trackingRow);
             }
@@ -142,6 +150,8 @@ namespace TrackIt
             // TODO: change width to either be same as panel width itself (bottom) or trimmed (right)
             _containerPanel.AlignTo(_cityServiceVehicleWorldInfoPanel.component, UIAlignAnchor.TopRight);
             _containerPanel.relativePosition = new Vector3(_containerPanel.parent.width + 5f, 0);
+
+            DataManager.instance.CargoBuildingChanged += UpdateVehicle;
         }
 
         private bool IsInitialized()
@@ -155,21 +165,29 @@ namespace TrackIt
         private void ResetCache()
         {
             _cachedVehicleID = 0;
+            _cachedLeadingVehicleID = 0;
         }
 
         private void UpdateData()
         {
-            var vehicleID = WorldInfoPanel.GetCurrentInstanceID().Vehicle;
-            if (vehicleID == 0 || _cachedVehicleID == vehicleID || !IsInitialized())
+            InstanceID instanceID = WorldInfoPanel.GetCurrentInstanceID();
+            ushort vehicleID = instanceID.Type == InstanceType.Vehicle ? instanceID.Vehicle : (ushort)0;
+            if (_cachedVehicleID == vehicleID)
             {
                 return;
             }
-            IDictionary<ResourceCategoryType, int> vehicleCargoCategoryTotals = GameEntityDataExtractor.GetVehicleCargoBasicResourceTotals(vehicleID);
+            ushort leadingVehicleID = 0;
+            IDictionary<ResourceCategoryType, int> vehicleCargoCategoryTotals = GameEntityDataExtractor.GetVehicleCargoBasicResourceTotals(
+                vehicleID, out leadingVehicleID);
+            if (_cachedLeadingVehicleID == leadingVehicleID)
+            {
+                return;
+            }
             if (vehicleCargoCategoryTotals.Count != 0)
             {
                 int grandTotal = vehicleCargoCategoryTotals.Values.Sum();
 #if DEBUG
-                LogUtil.LogInfo($"Vehicle Cargo Total: {grandTotal}" + ", Groups: {" +
+                LogUtil.LogInfo($"Updating cargo based on vehicleID: {vehicleID} leadingVehicleID: {leadingVehicleID} grandTotal: {grandTotal}" + ", groups: {" +
                     vehicleCargoCategoryTotals.Select(kv => kv.Key + ": " +
                     kv.Value).Aggregate((p, c) => p + ": " + c) + "}");
 #endif
@@ -205,13 +223,14 @@ namespace TrackIt
             else
             {
 #if DEBUG
-                LogUtil.LogInfo($"No cargo resources found for vehicle {vehicleID}");
+                LogUtil.LogInfo($"No cargo resources found for vehicleID: {vehicleID} leadingVehicleID: {leadingVehicleID}");
 #endif
                 _vehicleCargoChart.ResetValues();
                 _vehicleCargoChart.Hide();
                 _containerPanel.Hide();
             }
             _cachedVehicleID = vehicleID;
+            _cachedLeadingVehicleID = leadingVehicleID;
         }
 
         private void UpdateProgressBar(UIProgressBar progressBar, Color color, int amount, int total)

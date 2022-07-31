@@ -5,6 +5,7 @@ using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using UnityEngine;
 using TrackIt.API;
+using static TrackIt.VehicleWorldInfoPanelMonitor;
 
 namespace TrackIt
 {
@@ -136,6 +137,8 @@ namespace TrackIt
             // Hard to see resource colors using GenericProgressBar and GenericProgressBarFill, so use:
             progressBar.backgroundSprite = "LevelBarBackground";
             progressBar.progressSprite = "LevelBarForeground";
+            progressBar.minValue = 0;   // scale as a percent value
+            progressBar.maxValue = 100;
 
             return progressBar;
         }

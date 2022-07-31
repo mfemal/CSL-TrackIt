@@ -34,7 +34,7 @@ namespace TrackIt
                 {
                     ResetCache();
                 }
-                else
+                else if (IsInitialized())
                 {
                     UpdateData();
                 }
@@ -149,10 +149,6 @@ namespace TrackIt
 
         private void SetBuildingCargoVisible(bool visible)
         {
-            if (!IsInitialized())
-            {
-                return;
-            }
             if (visible)
             {
                 _buildingCargoLabel.Show();
@@ -167,7 +163,7 @@ namespace TrackIt
 
         private void UpdateBuildingCargoStatistics(ushort buildingID)
         {
-            if (buildingID == _cachedBuildingID || !IsInitialized())
+            if (buildingID == _cachedBuildingID)
             {
                 return;
             }

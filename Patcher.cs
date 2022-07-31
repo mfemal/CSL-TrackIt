@@ -2,10 +2,11 @@
 using System.Reflection;
 using UnityEngine;
 using HarmonyLib;
+using ColossalFramework;
 
 namespace TrackIt
 {
-    // Class and methods must be static
+    // Class and methods must be static, uses the CitiesHarmony API (boformer)
     public static class Patcher
     {
         private const string _harmonyId = ModInfo.NamespacePrefix + ".Patcher.HarmonyId";
@@ -51,15 +52,18 @@ namespace TrackIt
     {
 
         /// <summary>
-        /// Called by the CitiesHarmony wrapper (boformer).
+        /// Called after the source is set by the game engine when cargo is transferred.
         /// </summary>
         /// <param name="vehicleID">Vehicle ID.</param>
         /// <param name="data">Vehicle data.</param>
         /// <param name="sourceBuilding">Source building ID for the transfer.</param>
         public static void Postfix(ushort vehicleID, ref Vehicle data, ushort sourceBuilding)
         {
-            var parcel = new CargoDescriptor(sourceBuilding, false, data.m_transferType, data.m_transferSize, data.m_flags);
-            DataManager.instance.TrackIt(parcel);
+            DataManager.instance.TrackIt(new CargoDescriptor(sourceBuilding,
+                false,
+                data.m_transferType,
+                data.m_transferSize,
+                data.m_flags));
 #if DEBUG
             LogUtil.LogInfo($"SetSource Postfix vehicleID: {vehicleID} sourceBuilding: {sourceBuilding}");
 #endif
@@ -67,7 +71,7 @@ namespace TrackIt
     }
 
     /// <summary>
-    /// Via Harmony, track inbound (received) cargo resource transfers in the CargoTruckAI.
+    /// Track inbound (received) cargo resource transfers in the CargoTruckAI.
     /// </summary>
     [HarmonyPatch(typeof(CargoTruckAI))]
     [HarmonyPatch(nameof(CargoTruckAI.ChangeVehicleType))]
@@ -77,10 +81,10 @@ namespace TrackIt
     public static class CargoTruckAIChangeVehicleTypePatch
     {
         // Custom state between Prefix and Postfix, must use static var (see: https://harmony.pardeike.net/articles/patching.html)
-        private static CargoDescriptor? s_cargoParcel;
+        private static CargoDescriptor? s_cargoDescriptor;
 
         /// <summary>
-        /// Called by the CitiesHarmony wrapper (boformer). The data for this transfer is tracked so it can be recorded in Postfix.
+        /// The data for this transfer is tracked so it can be recorded in Postfix.
         /// </summary>
         /// <param name="vehicleInfo">Vehicle info reference.</param>
         /// <param name="vehicleID">Vehicle ID</param>
@@ -89,20 +93,23 @@ namespace TrackIt
         /// <param name="laneID">The lane ID.</param>
         public static void Prefix(ref VehicleInfo vehicleInfo, ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position pathPos, uint laneID)
         {
-            if ((vehicleData.m_flags & (Vehicle.Flags.TransferToSource | Vehicle.Flags.GoingBack)) != 0)
+            ushort buildingID = 0;
+            if ((vehicleData.m_flags & (Vehicle.Flags.TransferToSource | Vehicle.Flags.GoingBack)) == 0)
             {
-                return;
+                Vector3 vector = NetManager.instance.m_lanes.m_buffer[laneID].CalculatePosition(0.5f);
+                NetInfo info = NetManager.instance.m_segments.m_buffer[pathPos.m_segment].Info;
+                buildingID = Singleton<BuildingManager>.instance.FindBuilding(vector,
+                    100f, /* maxDistance */
+                    info.m_class.m_service,
+                    ItemClass.SubService.None,
+                    Building.Flags.None, /* required */
+                    Building.Flags.None); /* forbidden */
             }
-
-            Vector3 vector = NetManager.instance.m_lanes.m_buffer[laneID].CalculatePosition(0.5f);
-            NetInfo info = NetManager.instance.m_segments.m_buffer[pathPos.m_segment].Info;
-            ushort buildingID = BuildingManager.instance.FindBuilding(vector, 100f, info.m_class.m_service, ItemClass.SubService.None, Building.Flags.None, Building.Flags.None);
-
-            s_cargoParcel = new CargoDescriptor(buildingID, true, vehicleData.m_transferType, vehicleData.m_transferSize, vehicleData.m_flags);
+            s_cargoDescriptor = new CargoDescriptor(buildingID, true, vehicleData.m_transferType, vehicleData.m_transferSize, vehicleData.m_flags);
         }
 
         /// <summary>
-        /// Track the data transferred internally. This is done conditionally based on checks in Prefix.
+        /// Track the data transferred internally. This is done conditionally based on checks in Prefix if the cargo descriptor is set.
         /// </summary>
         /// <param name="vehicleInfo">Vehicle info reference.</param>
         /// <param name="vehicleID">Vehicle ID</param>
@@ -111,16 +118,16 @@ namespace TrackIt
         /// <param name="laneID">The lane ID.</param>
         public static void Postfix(ref VehicleInfo vehicleInfo, ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position pathPos, uint laneID)
         {
-            if (!s_cargoParcel.HasValue) // check if ignored (not set) in Prefix due to boundary conditions
+            if (!s_cargoDescriptor.HasValue) // check if ignored (not set) in Prefix due to boundary conditions
             {
                 return;
             }
-            var parcel = (CargoDescriptor)s_cargoParcel;
-            DataManager.instance.TrackIt(parcel);
+            CargoDescriptor cargoDescriptor = s_cargoDescriptor.Value;
+            DataManager.instance.TrackIt(cargoDescriptor);
 #if DEBUG
-            LogUtil.LogInfo($"ChangeVehicleType Postfix vehicleID: {vehicleID} sourceBuilding: {parcel.BuildingID}");
+            LogUtil.LogInfo($"ChangeVehicleType Postfix vehicleID: {vehicleID} sourceBuilding: {cargoDescriptor.BuildingID}");
 #endif
-            s_cargoParcel = null;
+            s_cargoDescriptor = null;
         }
     }
 }
