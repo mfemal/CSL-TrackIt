@@ -34,6 +34,7 @@
                     resourceCategoryType = ResourceCategoryType.Agriculture;
                     break;
                 case ResourceType.Goods:
+                case ResourceType.Coal:
                 case ResourceType.LuxuryProducts:
                     resourceCategoryType = ResourceCategoryType.Goods;
                     break;

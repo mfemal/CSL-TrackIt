@@ -32,8 +32,7 @@ namespace TrackIt
             // extract these once, they will never change
             s_resourceCategories = Enum.GetValues(typeof(ResourceCategoryType))
                 .Cast<ResourceCategoryType>()
-                .Where(t => IsResourceCategoryAvailable(t))
-                .Except(new List<ResourceCategoryType>() { ResourceCategoryType.None })
+                .Where(t => IsResourceCategoryAvailable(t) && t != ResourceCategoryType.None)
                 .ToList()
                 .AsReadOnly();
         }
@@ -126,8 +125,19 @@ namespace TrackIt
         {
             UIPanel panel = parent.AddUIComponent<UIPanel>();
             panel.name = ConstructComponentName(name);
-
             return panel;
+        }
+
+        public static UIProgressBar CreateCargoProgressBar(UIComponent parent, string name)
+        {
+            UIProgressBar progressBar = parent.AddUIComponent<UIProgressBar>();
+            progressBar.name = ConstructComponentName(name);
+
+            // Hard to see resource colors using GenericProgressBar and GenericProgressBarFill, so use:
+            progressBar.backgroundSprite = "LevelBarBackground";
+            progressBar.progressSprite = "LevelBarForeground";
+
+            return progressBar;
         }
 
         public static UISprite CreateSprite(UIComponent parent, string name, string spriteName)
@@ -137,6 +147,33 @@ namespace TrackIt
             sprite.spriteName = spriteName;
 
             return sprite;
+        }
+
+        /// <summary>
+        /// Create and add a new panel to a world info panel.
+        /// </summary>
+        /// <param name="parent">Parent world info panel</param>
+        /// <param name="name">name of the new panel to add.</param>
+        /// <param name="backgroundSprite">The background sprite (i.e. MenuPanel2, GenericTab, SubcategoriesPanel, etc.)</param>
+        /// <returns>The newly created panel.</returns>
+        public static UIPanel CreateWorldInfoCompanionPanel(UIComponent parent, string name, string backgroundSprite)
+        {
+            UIPanel panel = CreatePanel(parent, name);
+            panel.backgroundSprite = backgroundSprite;
+            panel.opacity = 0.90f;
+            return panel;
+        }
+
+        /// <summary>
+        /// Avoid showing a 0 integer, yet reflect data in the UI, if the total is "small" (perserve unit of measure kilo)
+        /// </summary>
+        /// <param name="v">Source value (in raw units) for formatting.</param>
+        /// <returns>Formatted string suitable for display.</returns>
+        public static string FormatCargoValue(int v)
+        {
+            return v > 0 && v < 1000 ?
+                string.Format("{0:0.000#}{1}", v / 1000.0f, Localization.Get("KILO_UNITS")) :
+                string.Format("{0:0}{1}", Mathf.Ceil(v / 1000.0f), Localization.Get("KILO_UNITS"));
         }
 
         /// <summary>

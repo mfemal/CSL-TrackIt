@@ -11,7 +11,6 @@
         // Oil
         Petrol,
         Oil,
-        Coal,
         Plastics,
         Petroleum,
 
@@ -40,6 +39,7 @@
         Metals,
 
         // Goods
+        Coal,
         Goods,
         LuxuryProducts,
 

@@ -76,17 +76,18 @@ namespace TrackIt
             {
                 if (total > 0)
                 {
-                    values[i] = Sent ? cargoStatistics.TotalResourcesSent(standardGroups[i], ResourceDestinationType) :
-                        cargoStatistics.TotalResourcesReceived(standardGroups[i], ResourceDestinationType);
-                    values[i] /= total;
+                    values[i] = Mathf.Clamp((Sent ?
+                        (float)cargoStatistics.TotalResourcesSent(standardGroups[i], ResourceDestinationType) :
+                        cargoStatistics.TotalResourcesReceived(standardGroups[i], ResourceDestinationType)) / total, 0f, 1f);
                 }
                 else
                 {
-                    values[i] = 0;
+                    values[i] = 0f;
                 }
             }
             SetValues(values);
             UpdateTotalText(total);
+
             return total;
         }
 
@@ -99,11 +100,11 @@ namespace TrackIt
             {
                 if (total > 0 && dict.ContainsKey(standardGroups[i]))
                 {
-                    values[i] = dict[standardGroups[i]] / total;
+                    values[i] = Mathf.Clamp(dict[standardGroups[i]] / (float)total, 0f, 1f);
                 }
                 else
                 {
-                    values[i] = 0;
+                    values[i] = 0f;
                 }
             }
             SetValues(values);
@@ -117,17 +118,13 @@ namespace TrackIt
         /// <param name="total">Value calculated for the total.</param>
         private void UpdateTotalText(int total)
         {
-            // Avoid showing a 0 integer, yet reflect data in the graph, if the total is "small" (perserve unit of measure kilo)
-            string t = total > 0 && total < 1000 ?
-                string.Format("{0:0.000#}{1}", total / 1000.0f, Localization.Get("KILO_UNITS")) :
-                string.Format("{0:0}{1}", Mathf.Ceil(total / 1000.0f), Localization.Get("KILO_UNITS"));
             if (TotalLabel != null)
             {
-                TotalLabel.text = t;
+                TotalLabel.text = UIUtils.FormatCargoValue(total);
             }
             else
             {
-                tooltip = t;
+                tooltip = UIUtils.FormatCargoValue(total);
             }
         }
     }
