@@ -23,6 +23,12 @@ namespace TrackIt
         public CargoUIChart()
         {
             size = new Vector2(90, 90);
+        }
+
+        public override void Start()
+        {
+            base.Start();
+
             IList<ResourceCategoryType> standardGroups = UIUtils.CargoBasicResourceGroups;
             for (int i = 0; i < standardGroups.Count; i++)
             {

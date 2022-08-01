@@ -194,6 +194,7 @@ namespace TrackIt
                 ResourceCategoryType resourceCategoryType;
                 TrackingRow vehicleCargoContentRow;
                 int categoryTotal = 0;
+                int j = 0, a = 0; // accumulator and index to ensure category totals always add to 100 (percentage for display is range for progress bar)
                 for (int i = 0; i < UIUtils.CargoBasicResourceGroups.Count; i++)
                 {
                     resourceCategoryType = UIUtils.CargoBasicResourceGroups[i];
@@ -204,7 +205,16 @@ namespace TrackIt
                             UIUtils.GetResourceCategoryColor(resourceCategoryType),
                             categoryTotal,
                             grandTotal);
-                        vehicleCargoContentRow.Percentage.text = LocaleFormatter.FormatPercentage((int)vehicleCargoContentRow.ProgressBar.value);
+                        int p = (int)(vehicleCargoContentRow.ProgressBar.value + 0.5);
+                        if (++j == vehicleCargoCategoryTotals.Count)
+                        {
+                            p = 100 - a;
+                        }
+                        else
+                        {
+                            a += p;
+                        }
+                        vehicleCargoContentRow.Percentage.text = LocaleFormatter.FormatPercentage(p);
                         vehicleCargoContentRow.Panel.Show();
                     }
                     else
