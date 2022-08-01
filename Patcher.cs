@@ -45,6 +45,42 @@ namespace TrackIt
     }
 
     /// <summary>
+    /// Overrides VehicleAI which does not call base class. This tracking is done after cargo is unloaded at the harbor.
+    /// </summary>
+    [HarmonyPatch(typeof(CargoShipAI), nameof(CargoShipAI.ArriveAtDestination))]
+    [HarmonyPatch(
+        new Type[] { typeof(ushort), typeof(Vehicle) },
+        new ArgumentType[] { ArgumentType.Normal, ArgumentType.Ref })]
+    public static class CargoShipAIArriveAtDestinationPatch
+    {
+        public static void Postfix(ushort vehicleID, ref Vehicle vehicleData)
+        {
+            DataManager.instance.TrackIt(new TravelDescriptor(vehicleID, EntityType.CargoShip, TravelStatus.Arrive));
+#if DEBUG
+            LogUtil.LogInfo($"CargoShipAI ArriveAtDestination Postfix vehicleID: {vehicleID}");
+#endif
+        }
+    }
+
+    /// <summary>
+    /// Overrides VehicleAI which does not call base class. This tracking is done after cargo is unloaded at the train station.
+    /// </summary>
+    [HarmonyPatch(typeof(CargoTrainAI), nameof(CargoTrainAI.ArriveAtDestination))]
+    [HarmonyPatch(
+        new Type[] { typeof(ushort), typeof(Vehicle) },
+        new ArgumentType[] { ArgumentType.Normal, ArgumentType.Ref })]
+    public static class CargoTrainAIArriveAtDestinationPatch
+    {
+        public static void Postfix(ushort vehicleID, ref Vehicle vehicleData)
+        {
+            DataManager.instance.TrackIt(new TravelDescriptor(vehicleID, EntityType.CargoTrain, TravelStatus.Arrive));
+#if DEBUG
+            LogUtil.LogInfo($"CargoTrainAI ArriveAtDestination Postfix vehicleID: {vehicleID}");
+#endif
+        }
+    }
+
+    /// <summary>
     /// Via Harmony, track outbound (sent) cargo resource transfers in the CargoTruckAI.
     /// </summary>
     [HarmonyPatch(typeof(CargoTruckAI), nameof(CargoTruckAI.SetSource))]
@@ -65,7 +101,7 @@ namespace TrackIt
                 data.m_transferSize,
                 data.m_flags));
 #if DEBUG
-            LogUtil.LogInfo($"SetSource Postfix vehicleID: {vehicleID} sourceBuilding: {sourceBuilding}");
+            LogUtil.LogInfo($"CargoTruckAI SetSource Postfix vehicleID: {vehicleID} sourceBuilding: {sourceBuilding}");
 #endif
         }
     }
@@ -125,7 +161,7 @@ namespace TrackIt
             CargoDescriptor cargoDescriptor = s_cargoDescriptor.Value;
             DataManager.instance.TrackIt(cargoDescriptor);
 #if DEBUG
-            LogUtil.LogInfo($"ChangeVehicleType Postfix vehicleID: {vehicleID} sourceBuilding: {cargoDescriptor.BuildingID}");
+            LogUtil.LogInfo($"CargoTruckAI ChangeVehicleType Postfix vehicleID: {vehicleID} sourceBuilding: {cargoDescriptor.BuildingID}");
 #endif
             s_cargoDescriptor = null;
         }

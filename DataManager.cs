@@ -91,7 +91,7 @@ namespace TrackIt
         /// structures appropriately. If the vehicle is set, an event is triggered for an listeners.
         /// </summary>
         /// <param name="cargoDescriptor">Descriptor for the data transferred.</param>
-        public void TrackIt(CargoDescriptor cargoDescriptor)
+        internal void TrackIt(CargoDescriptor cargoDescriptor)
         {
             // Ignore empty transefers, some internal game mechanics seem to make not doing this more complex in this mod
             if (cargoDescriptor.BuildingID == 0 || cargoDescriptor.TransferSize == 0)
@@ -130,19 +130,31 @@ namespace TrackIt
         }
 
         /// <summary>
+        /// Track vehicle travel stage changes.
+        /// </summary>
+        /// <param name="travelDescriptor">Metadata associated with the travel waypoint change.</param>
+        internal void TrackIt(TravelDescriptor travelDescriptor)
+        {
+            if (travelDescriptor.EntityType == EntityType.CargoTrain || travelDescriptor.EntityType == EntityType.CargoShip)
+            {
+                OnCargoVehicleChanged(travelDescriptor.VehicleID);
+            }
+        }
+
+        /// <summary>
         /// Get the cargo statistics associated with a building.
         /// </summary>
-        /// <param name="building">Source building, 0 is considered invalid and no cargoStatistics (null) is set.</param>
+        /// <param name="buildingID">Source building, 0 is considered invalid and no cargoStatistics (null) is set.</param>
         /// <param name="cargoStatistics">The statistics associated with the build (if found in the index).</param>
         /// <returns>True if the lookup occurred successfully based on the buildings tracked.</returns>
-        internal bool TryGetBuilding(ushort building, out CargoStatistics cargoStatistics)
+        internal bool TryGetBuilding(ushort buildingID, out CargoStatistics cargoStatistics)
         {
-            if (building == 0)
+            if (buildingID == 0)
             {
                 cargoStatistics = null;
                 return false;
             }
-            return _trackedBuildingIndex.TryGetValue(building, out cargoStatistics);
+            return _trackedBuildingIndex.TryGetValue(buildingID, out cargoStatistics);
         }
 
         internal void AddBuildingID(ushort buildingID)
@@ -191,7 +203,6 @@ namespace TrackIt
             }
         }
 
-        // TODO: implement
         private void OnCargoVehicleChanged(ushort vehicleID)
         {
             try

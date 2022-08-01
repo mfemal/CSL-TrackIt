@@ -77,7 +77,7 @@ namespace TrackIt
 
         public void UpdateVehicle(MonitoredDataChanged monitoredDataChanged)
         {
-            if (monitoredDataChanged.sourceID == _cachedVehicleID)
+            if (monitoredDataChanged.sourceID == _cachedVehicleID || monitoredDataChanged.sourceID == _cachedLeadingVehicleID)
             {
                 ResetCache();
             }
@@ -151,7 +151,7 @@ namespace TrackIt
             _containerPanel.AlignTo(_cityServiceVehicleWorldInfoPanel.component, UIAlignAnchor.TopRight);
             _containerPanel.relativePosition = new Vector3(_containerPanel.parent.width + 5f, 0);
 
-            DataManager.instance.CargoBuildingChanged += UpdateVehicle;
+            DataManager.instance.CargoVehicleChanged += UpdateVehicle;
         }
 
         private bool IsInitialized()

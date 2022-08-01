@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CargoUILegend.cs" />
+    <Compile Include="TravelDescriptor.cs" />
     <Compile Include="WorldInfoPanelMonitor.cs" />
     <Compile Include="CargoDescriptor.cs" />
     <Compile Include="CargoUIPanel.cs" />
