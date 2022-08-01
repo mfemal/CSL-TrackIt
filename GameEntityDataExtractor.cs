@@ -57,7 +57,7 @@ namespace TrackIt
                     resourceList = new List<TrackedResource>();
                     Vehicle cargoVehicle;
                     ushort c = leadingVehicle.m_firstCargo;
-                    DateTime now = SimulationManager.instance.m_currentGameTime;
+                    DateTime now = Singleton<SimulationManager>.instance.m_currentGameTime;
                     while (c != 0)
                     {
                         cargoVehicle = vehicleManager.m_vehicles.m_buffer[c];
@@ -65,7 +65,7 @@ namespace TrackIt
                             ResourceDestinationType.Local,
                             ConvertTransferType(cargoVehicle.m_transferType),
                             cargoVehicle.m_transferSize));
-                        c = cargoVehicle.m_nextCargo < VehicleManager.MAX_VEHICLE_COUNT ? cargoVehicle.m_nextCargo : (ushort)0;
+                        c = DataManager.instance.IsVehicleIDInRange(cargoVehicle.m_nextCargo) ? cargoVehicle.m_nextCargo : (ushort)0;
                     }
                 }
             }
@@ -74,7 +74,7 @@ namespace TrackIt
 
         internal static bool IsLeadingVehicle(ushort vehicleID)
         {
-            return (vehicleID != 0 && vehicleID < VehicleManager.MAX_VEHICLE_COUNT) ?
+            return DataManager.instance.IsVehicleIDInRange(vehicleID) ?
                 Singleton<VehicleManager>.instance.m_vehicles.m_buffer[vehicleID].m_leadingVehicle == 0 :
                 false;
         }

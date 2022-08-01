@@ -6,7 +6,15 @@ using TrackIt.API;
 
 namespace TrackIt
 {
-    class CargoUIChart : UIRadialChart
+    /// <summary>
+    /// This class extends the base Radial Chart available with functionality to wrap setters based on type of cargo.
+    /// Using fixed offset positions (slice count equal to number of standard list of categories) with 0 values for
+    /// the resource category total causes odd run-time behaviour on first-time display. So setters manipulate the
+    /// (protected) m_slices directly rather than using [Add|Get]Slice provided in UIRadialChart. This does prevent
+    /// setting up the chart once (i.e. Start methods) and using offset indexes consistently to update resource
+    /// category totals (i.e. using a total of 0 if that category is not relevant).
+    /// </summary>
+    public class CargoUIChart : UIRadialChart
     {
         public UILabel TotalLabel;
 
@@ -23,48 +31,20 @@ namespace TrackIt
         public CargoUIChart()
         {
             size = new Vector2(90, 90);
-        }
-
-        public override void Start()
-        {
-            base.Start();
-
-            IList<ResourceCategoryType> standardGroups = UIUtils.CargoBasicResourceGroups;
-            for (int i = 0; i < standardGroups.Count; i++)
-            {
-                AddSlice();
-
-                SliceSettings settings = GetSlice(i);
-                switch (standardGroups[i])
-                {
-                    case ResourceCategoryType.Oil:
-                        // oil color is very dark so make it a little lighter
-                        settings.innerColor = settings.outterColor = UIUtils.GetResourceCategoryColor(ResourceCategoryType.Oil) * 1.5f;
-                        break;
-                    default:
-                        settings.innerColor = settings.outterColor = UIUtils.GetResourceCategoryColor(standardGroups[i]);
-                        break;
-                }
-            }
-            ResetValues();
+            spriteName = "PieChartBg";
         }
 
         /// <summary>
-        /// Convenience method to initialize multiple values.
+        /// Convenience method to initialize multiple values at once.
         /// </summary>
         /// <param name="sent">Whether the resource data is either sent, or received.</param>
         /// <param name="resourceDestinationType">Resource destination</param>
         /// <param name="totalLabel">The total value label, if set the numeric value is localized and units displayed.</param>
-        public void Initialize(bool sent, ResourceDestinationType resourceDestinationType, UILabel totalLabel)
+        internal void Initialize(bool sent, ResourceDestinationType resourceDestinationType, UILabel totalLabel)
         {
             Sent = sent;
             ResourceDestinationType = resourceDestinationType;
             TotalLabel = totalLabel;
-        }
-
-        public void ResetValues()
-        {
-            SetValues(new float[UIUtils.CargoBasicResourceGroups.Count]);
         }
 
         /// <summary>
@@ -73,49 +53,74 @@ namespace TrackIt
         /// <param name="cargoStatistics">The cargo statistics determined from the index.</param>
         /// <param name="sent">Sent (true) or Received (false)</param>
         /// <param name="resourceDestinationType">The panel groups results by this value</param>
-        public int SetValues(CargoStatistics cargoStatistics)
+        internal int SetValues(CargoStatistics cargoStatistics)
         {
+            m_Slices.Clear();
+
             IList<ResourceCategoryType> standardGroups = UIUtils.CargoBasicResourceGroups;
-            float[] values = new float[standardGroups.Count];
+            List<float> values = new List<float>(standardGroups.Count);
             int total = Sent ? cargoStatistics.TotalResourcesSent(ResourceDestinationType) : cargoStatistics.TotalResourcesReceived(ResourceDestinationType);
-            for (int i = 0; i < standardGroups.Count; i++) // preserve order for colors
+            if (total > 0)
             {
-                if (total > 0)
+                for (int i = 0; i < standardGroups.Count; i++)
                 {
-                    values[i] = Mathf.Clamp((Sent ?
-                        (float)cargoStatistics.TotalResourcesSent(standardGroups[i], ResourceDestinationType) :
-                        cargoStatistics.TotalResourcesReceived(standardGroups[i], ResourceDestinationType)) / total, 0f, 1f);
-                }
-                else
-                {
-                    values[i] = 0f;
+                    int categoryTotal = Sent ?
+                            cargoStatistics.TotalResourcesSent(standardGroups[i], ResourceDestinationType) :
+                            cargoStatistics.TotalResourcesReceived(standardGroups[i], ResourceDestinationType);
+                    if (categoryTotal == 0)
+                    {
+                        continue;
+                    }
+                    m_Slices.Add(CreateSliceSettings(standardGroups[i]));
+                    values.Add(Mathf.Clamp((float)categoryTotal / total , 0f, 1f));
                 }
             }
-            SetValues(values);
+            SetValues(values.ToArray());
             UpdateTotalText(total);
 
             return total;
         }
 
-        public int SetValues(IDictionary<ResourceCategoryType, int> dict)
+        internal int SetValues(IDictionary<ResourceCategoryType, int> dict)
         {
+            m_Slices.Clear();
+
             IList<ResourceCategoryType> standardGroups = UIUtils.CargoBasicResourceGroups;
-            float[] values = new float[standardGroups.Count];
+            List<float> values = new List<float>(standardGroups.Count);
             int total = dict.Select(kv => kv.Value).ToList().Sum();
-            for (int i = 0; i < standardGroups.Count; i++) // preserve order for colors
+            if (total > 0)
             {
-                if (total > 0 && dict.ContainsKey(standardGroups[i]))
+                for (int i = 0; i < standardGroups.Count; i++)
                 {
-                    values[i] = Mathf.Clamp(dict[standardGroups[i]] / (float)total, 0f, 1f);
-                }
-                else
-                {
-                    values[i] = 0f;
+                    if (!dict.ContainsKey(standardGroups[i]))
+                    {
+                        continue;
+                    }
+                    m_Slices.Add(CreateSliceSettings(standardGroups[i]));
+                    values.Add(Mathf.Clamp((float)dict[standardGroups[i]] / total, 0f, 1f));
                 }
             }
-            SetValues(values);
+            SetValues(values.ToArray());
             UpdateTotalText(total);
+
             return total;
+        }
+
+        private SliceSettings CreateSliceSettings(ResourceCategoryType resourceCategoryType)
+        {
+            SliceSettings settings = new SliceSettings();
+            Color color = UIUtils.GetResourceCategoryColor(resourceCategoryType);
+            switch (resourceCategoryType)
+            {
+                case ResourceCategoryType.Oil:
+                    // oil color is very dark so make it a little lighter
+                    settings.innerColor = settings.outterColor = color * 1.5f;
+                    break;
+                default:
+                    settings.innerColor = settings.outterColor = color;
+                    break;
+            }
+            return settings;
         }
 
         /// <summary>

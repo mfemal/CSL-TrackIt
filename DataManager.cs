@@ -79,10 +79,30 @@ namespace TrackIt
 #if DEBUG
             LogUtil.LogInfo($"Found {_trackedBuildingSet.Count} building prefabs.");
 #endif
-            for (ushort i = 0; i < BuildingManager.instance.m_buildings.m_size; i++)
+            for (ushort i = 0; i < Singleton<BuildingManager>.instance.m_buildings.m_size; i++)
             {
                 AddBuildingID(i);
             }
+        }
+
+        /// <summary>
+        /// Screens the provided vehicle ID value for validity.
+        /// </summary>
+        /// <param name="vehicleID">Candidate vehicle ID to check</param>
+        /// <returns>True if the vehicle ID is not 0 and less than VehicleManager.MAX_VEHICLE_COUNT</returns>
+        internal bool IsVehicleIDInRange(ushort vehicleID)
+        {
+            return vehicleID > 0 && vehicleID < VehicleManager.MAX_VEHICLE_COUNT;
+        }
+
+        /// <summary>
+        /// Screens the provided building ID value for validity.
+        /// </summary>
+        /// <param name="buildingID">Candidate building ID to check</param>
+        /// <returns>True if the building ID is not 0 and less than BuildingManager.MAX_BUILDING_COUNT</returns>
+        internal bool IsBuildingIDInRange(ushort buildingID)
+        {
+            return buildingID > 0 && buildingID < BuildingManager.MAX_BUILDING_COUNT;
         }
 
         /// <summary>
@@ -93,16 +113,16 @@ namespace TrackIt
         /// <param name="cargoDescriptor">Descriptor for the data transferred.</param>
         internal void TrackIt(CargoDescriptor cargoDescriptor)
         {
-            if (!_initialized)
-            {
-                return;
-            }
-            // Ignore empty transefers, some internal game mechanics seem to make not doing this more complex in this mod
-            if (cargoDescriptor.BuildingID == 0 || cargoDescriptor.TransferSize == 0)
-            {
-                return;
-            }
             ushort buildingID = cargoDescriptor.BuildingID;
+            if (!_initialized || !IsBuildingIDInRange(buildingID))
+            {
+                return;
+            }
+            // Ignore empty transfers for now, some internal mechanics (i.e. returning empty vehicles) make not doing this more complex
+            if (cargoDescriptor.TransferSize == 0)
+            {
+                return;
+            }
             BuildingManager buildingManager = Singleton<BuildingManager>.instance;
             if (!(buildingManager.m_buildings.m_buffer[buildingID].Info.m_buildingAI is CargoStationAI))
             {
@@ -111,7 +131,7 @@ namespace TrackIt
 
             if (_trackedBuildingIndex.TryGetValue(cargoDescriptor.BuildingID, out CargoStatistics cargoStatistics))
             {
-                DateTime ts = SimulationManager.instance.m_currentGameTime.Date; // Ignore the time component
+                DateTime ts = Singleton<SimulationManager>.instance.m_currentGameTime.Date; // Ignore the time component
                 if (!cargoDescriptor.Incoming)
                 {
                     cargoStatistics.TrackResourceSent(ts,
@@ -139,7 +159,7 @@ namespace TrackIt
         /// <param name="travelDescriptor">Descriptor associated with the travel waypoint change.</param>
         internal void TrackIt(TravelDescriptor travelDescriptor)
         {
-            if (!_initialized)
+            if (!_initialized || !IsVehicleIDInRange(travelDescriptor.VehicleID))
             {
                 return;
             }
@@ -167,13 +187,13 @@ namespace TrackIt
 
         internal void AddBuildingID(ushort buildingID)
         {
-            Building building = BuildingManager.instance.m_buildings.m_buffer[buildingID];
+            Building building = Singleton<BuildingManager>.instance.m_buildings.m_buffer[buildingID];
             if (_trackedBuildingSet.Contains(building.m_infoIndex) && !_trackedBuildingIndex.ContainsKey(buildingID))
             {
-                string buildingName = BuildingManager.instance.GetBuildingName(buildingID, InstanceID.Empty);
                 // Restoring previous values of truck statistics
                 _trackedBuildingIndex.Add(buildingID, new CargoStatistics());
 #if DEBUG
+                string buildingName = Singleton<BuildingManager>.instance.GetBuildingName(buildingID, InstanceID.Empty);
                 LogUtil.LogInfo($"Cargo station buildingID:{buildingID} buildingName:{buildingName} added to index");
 #endif
             }
@@ -183,9 +203,9 @@ namespace TrackIt
         {
             if (_trackedBuildingIndex.ContainsKey(buildingID))
             {
-                string buildingName = BuildingManager.instance.GetBuildingName(buildingID, InstanceID.Empty);
                 _trackedBuildingIndex.Remove(buildingID);
 #if DEBUG
+                string buildingName = Singleton<BuildingManager>.instance.GetBuildingName(buildingID, InstanceID.Empty);
                 LogUtil.LogInfo($"Cargo station buildingID:{buildingID} buildingName:{buildingName} removed from index");
 #endif
             }

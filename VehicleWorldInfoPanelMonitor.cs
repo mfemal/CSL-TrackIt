@@ -223,8 +223,6 @@ namespace TrackIt
                     }
                 }
                 _vehicleCargoChart.SetValues(vehicleCargoCategoryTotals);
-                _vehicleCargoChart.Show();
-
                 _vehicleCargoPanel.FitChildren(_vehicleCargoPadding);
 
                 _containerPanel.FitChildren(_containerPadding);
@@ -235,8 +233,6 @@ namespace TrackIt
 #if DEBUG
                 LogUtil.LogInfo($"No cargo resources found for vehicleID: {vehicleID} leadingVehicleID: {leadingVehicleID}");
 #endif
-                _vehicleCargoChart.ResetValues();
-                _vehicleCargoChart.Hide();
                 _containerPanel.Hide();
             }
             _cachedVehicleID = vehicleID;
