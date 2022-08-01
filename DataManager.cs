@@ -93,6 +93,10 @@ namespace TrackIt
         /// <param name="cargoDescriptor">Descriptor for the data transferred.</param>
         internal void TrackIt(CargoDescriptor cargoDescriptor)
         {
+            if (!_initialized)
+            {
+                return;
+            }
             // Ignore empty transefers, some internal game mechanics seem to make not doing this more complex in this mod
             if (cargoDescriptor.BuildingID == 0 || cargoDescriptor.TransferSize == 0)
             {
@@ -132,9 +136,13 @@ namespace TrackIt
         /// <summary>
         /// Track vehicle travel stage changes.
         /// </summary>
-        /// <param name="travelDescriptor">Metadata associated with the travel waypoint change.</param>
+        /// <param name="travelDescriptor">Descriptor associated with the travel waypoint change.</param>
         internal void TrackIt(TravelDescriptor travelDescriptor)
         {
+            if (!_initialized)
+            {
+                return;
+            }
             if (travelDescriptor.EntityType == EntityType.CargoTrain || travelDescriptor.EntityType == EntityType.CargoShip)
             {
                 OnCargoVehicleChanged(travelDescriptor.VehicleID);
@@ -159,10 +167,10 @@ namespace TrackIt
 
         internal void AddBuildingID(ushort buildingID)
         {
-            var building = BuildingManager.instance.m_buildings.m_buffer[buildingID];
+            Building building = BuildingManager.instance.m_buildings.m_buffer[buildingID];
             if (_trackedBuildingSet.Contains(building.m_infoIndex) && !_trackedBuildingIndex.ContainsKey(buildingID))
             {
-                var buildingName = BuildingManager.instance.GetBuildingName(buildingID, InstanceID.Empty);
+                string buildingName = BuildingManager.instance.GetBuildingName(buildingID, InstanceID.Empty);
                 // Restoring previous values of truck statistics
                 _trackedBuildingIndex.Add(buildingID, new CargoStatistics());
 #if DEBUG
@@ -175,7 +183,7 @@ namespace TrackIt
         {
             if (_trackedBuildingIndex.ContainsKey(buildingID))
             {
-                var buildingName = BuildingManager.instance.GetBuildingName(buildingID, InstanceID.Empty);
+                string buildingName = BuildingManager.instance.GetBuildingName(buildingID, InstanceID.Empty);
                 _trackedBuildingIndex.Remove(buildingID);
 #if DEBUG
                 LogUtil.LogInfo($"Cargo station buildingID:{buildingID} buildingName:{buildingName} removed from index");
