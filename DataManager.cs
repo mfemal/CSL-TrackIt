@@ -24,7 +24,7 @@ namespace TrackIt
         /// Buildings that are tracked. This set is initialized from the prefabs and as a game runs, additions or
         /// removals are done appropriately.
         /// </summary>
-        private static HashSet<int> _trackedBuildingSet;
+        private static HashSet<int> _trackedPrefabBuildingSet;
 
         /// <summary>
         /// Index to the data associated with a building whose cargo is tracked.
@@ -37,7 +37,7 @@ namespace TrackIt
         /// </summary>
         private static readonly DataManager _instance = new DataManager();
         private DataManager() {
-            _trackedBuildingSet = new HashSet<int>();
+            _trackedPrefabBuildingSet = new HashSet<int>();
             _trackedBuildingIndex = new Dictionary<ushort, CargoStatistics>();
         }
 
@@ -73,11 +73,11 @@ namespace TrackIt
 #if DEBUG
                     LogUtil.LogInfo($"Building prefab found: {prefab.name}, tracking enabled for it.");
 #endif
-                    _trackedBuildingSet.Add(prefab.m_prefabDataIndex);
+                    _trackedPrefabBuildingSet.Add(prefab.m_prefabDataIndex);
                 }
             }
 #if DEBUG
-            LogUtil.LogInfo($"Found {_trackedBuildingSet.Count} building prefabs.");
+            LogUtil.LogInfo($"Found {_trackedPrefabBuildingSet.Count} building prefabs.");
 #endif
             for (ushort i = 0; i < Singleton<BuildingManager>.instance.m_buildings.m_size; i++)
             {
@@ -103,6 +103,19 @@ namespace TrackIt
         internal bool IsBuildingIDInRange(ushort buildingID)
         {
             return buildingID > 0 && buildingID < BuildingManager.MAX_BUILDING_COUNT;
+        }
+
+        internal void ExpungeOlderThan(DateTime oldestAllowedDate)
+        {
+            CargoStatistics cargoStatistics;
+            foreach (ushort buildingID in _trackedBuildingIndex.Keys)
+            {
+                if (_trackedBuildingIndex.TryGetValue(buildingID, out cargoStatistics) &&
+                    (cargoStatistics.ExpungeOlderThan(oldestAllowedDate) > 0))
+                {
+                    OnCargoBuildingChanged(buildingID);
+                }
+            }
         }
 
         /// <summary>
@@ -188,7 +201,7 @@ namespace TrackIt
         internal void AddBuildingID(ushort buildingID)
         {
             Building building = Singleton<BuildingManager>.instance.m_buildings.m_buffer[buildingID];
-            if (_trackedBuildingSet.Contains(building.m_infoIndex) && !_trackedBuildingIndex.ContainsKey(buildingID))
+            if (_trackedPrefabBuildingSet.Contains(building.m_infoIndex) && !_trackedBuildingIndex.ContainsKey(buildingID))
             {
                 // Restoring previous values of truck statistics
                 _trackedBuildingIndex.Add(buildingID, new CargoStatistics());
@@ -213,7 +226,7 @@ namespace TrackIt
 
         internal void Clear()
         {
-            _trackedBuildingSet.Clear();
+            _trackedPrefabBuildingSet.Clear();
             _trackedBuildingIndex.Clear();
  
             _initialized = false;

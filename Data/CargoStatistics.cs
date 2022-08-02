@@ -17,18 +17,12 @@ namespace TrackIt.API
         /// <summary>
         /// List of resources sent by an entity.
         /// </summary>
-        private List<TrackedResource> s_resourcesSent = new List<TrackedResource>();
-
-        // Object lock for concurrent reading and writing to s_resourcesSent
-        private object s_resourcesSentLock = new object();
+        private List<TrackedResource> _resourcesSent = new List<TrackedResource>();
 
         /// <summary>
         /// List of resources received by an entity.
         /// </summary>
-        private List<TrackedResource> s_resourcesReceived = new List<TrackedResource>();
-
-        // Object lock for concurrent reading and writing to s_resourcesReceived
-        private object s_resourcesReceivedLock = new object();
+        private List<TrackedResource> _resourcesReceived = new List<TrackedResource>();
 
         public int CountResources()
         {
@@ -37,12 +31,38 @@ namespace TrackIt.API
 
         public int CountResourcesReceived()
         {
-            return s_resourcesReceived.Count; // atomic for our needs
+            return _resourcesReceived.Count; // atomic for our needs
         }
 
         public int CountResourcesSent()
         {
-            return s_resourcesSent.Count; // atomic for our needs
+            return _resourcesSent.Count; // atomic for our needs
+        }
+
+        public int ExpungeOlderThan(DateTime oldestAllowedDate)
+        {
+            int expunged = 0;
+            lock (_resourcesSent)
+            {
+                expunged = _resourcesSent.Count;
+                List<TrackedResource> filteredList = _resourcesSent
+                     .Where(r => r.ts >= oldestAllowedDate)
+                     .ToList();
+                expunged -= filteredList.Count;
+                _resourcesSent.Clear();
+                _resourcesSent.AddRange(filteredList);
+            }
+            lock (_resourcesReceived)
+            {
+                expunged += _resourcesReceived.Count;
+                List<TrackedResource> filteredList = _resourcesReceived
+                    .Where(r => r.ts >= oldestAllowedDate)
+                    .ToList();
+                expunged -= filteredList.Count;
+                _resourcesReceived.Clear();
+                _resourcesReceived.AddRange(filteredList);
+            }
+            return expunged;
         }
 
         public int TotalResources()
@@ -52,52 +72,52 @@ namespace TrackIt.API
 
         public int TotalResourcesSent()
         {
-            return createResourceSnapshot(s_resourcesSentLock, s_resourcesSent).Sum(t => t._amount);
+            return createResourceSnapshot(ref _resourcesSent).Sum(t => t._amount);
         }
 
         public int TotalResourcesSent(ResourceCategoryType resourceCategoryType)
         {
-            return createResourceSnapshot(s_resourcesSentLock, s_resourcesSent)
+            return createResourceSnapshot(ref _resourcesSent)
                 .Where(t => t._resourceCategoryType == resourceCategoryType)
                 .Sum(t => t._amount);
         }
 
         public int TotalResourcesSent(ResourceDestinationType resourceDestinationType)
         {
-            return createResourceSnapshot(s_resourcesSentLock, s_resourcesSent)
+            return createResourceSnapshot(ref _resourcesSent)
                 .Where(t => t._resourceDestinationType == resourceDestinationType)
                 .Sum(t => t._amount);
         }
 
         public int TotalResourcesSent(ResourceCategoryType resourceCategoryType, ResourceDestinationType resourceDestinationType)
         {
-            return createResourceSnapshot(s_resourcesSentLock, s_resourcesSent)
+            return createResourceSnapshot(ref _resourcesSent)
                 .Where(t => t._resourceCategoryType == resourceCategoryType && t._resourceDestinationType == resourceDestinationType)
                 .Sum(t => t._amount);
         }
 
         public int TotalResourcesReceived()
         {
-            return createResourceSnapshot(s_resourcesReceivedLock, s_resourcesReceived).Sum(t => t._amount);
+            return createResourceSnapshot(ref _resourcesReceived).Sum(t => t._amount);
         }
 
         public int TotalResourcesReceived(ResourceCategoryType resourceCategoryType)
         {
-            return createResourceSnapshot(s_resourcesReceivedLock, s_resourcesReceived)
+            return createResourceSnapshot(ref _resourcesReceived)
                 .Where(t => t._resourceCategoryType == resourceCategoryType)
                 .Sum(t => t._amount);
         }
 
         public int TotalResourcesReceived(ResourceDestinationType resourceDestinationType)
         {
-            return createResourceSnapshot(s_resourcesReceivedLock, s_resourcesReceived)
+            return createResourceSnapshot(ref _resourcesReceived)
                 .Where(t => t._resourceDestinationType == resourceDestinationType)
                 .Sum(t => t._amount);
         }
 
         public int TotalResourcesReceived(ResourceCategoryType resourceCategoryType, ResourceDestinationType resourceDestinationType)
         {
-            return createResourceSnapshot(s_resourcesReceivedLock , s_resourcesReceived)
+            return createResourceSnapshot(ref _resourcesReceived)
                 .Where(t => t._resourceCategoryType == resourceCategoryType && t._resourceDestinationType == resourceDestinationType)
                 .Sum(t => t._amount);
         }
@@ -109,15 +129,15 @@ namespace TrackIt.API
         /// <param name="o">Object lock, must be non-null.</param>
         /// <param name="list">Source list to create a snapshot of.</param>
         /// <returns>New list containing references to the copied tracked values.</returns>
-        private List<TrackedResource> createResourceSnapshot(object o, List<TrackedResource> list)
+        private IList<TrackedResource> createResourceSnapshot(ref List<TrackedResource> list)
         {
-            if (list == null)
+            if (list == null || list.Count == 0)
             {
-                return null;
+                return new List<TrackedResource>(0);
             }
 
             List<TrackedResource> l = null;
-            lock (o)
+            lock (list)
             {
                 l = list.Where(r => r._resourceType != ResourceType.None).ToList();
             }
@@ -126,17 +146,17 @@ namespace TrackIt.API
 
         public void TrackResourceSent(DateTime ts, ResourceDestinationType resourceDestinationType, ResourceType resourceType, int amount)
         {
-            lock (s_resourcesSentLock)
+            lock (_resourcesSent)
             {
-                s_resourcesSent.Add(new TrackedResource(ts, resourceDestinationType, resourceType, amount));
+                _resourcesSent.Add(new TrackedResource(ts, resourceDestinationType, resourceType, amount));
             }
         }
 
         public void TrackResourceReceived(DateTime ts, ResourceDestinationType resourceDestinationType, ResourceType resourceType, int amount)
         {
-            lock (s_resourcesReceivedLock)
+            lock (_resourcesReceived)
             {
-                s_resourcesReceived.Add(new TrackedResource(ts, resourceDestinationType, resourceType, amount));
+                _resourcesReceived.Add(new TrackedResource(ts, resourceDestinationType, resourceType, amount));
             }
         }
 

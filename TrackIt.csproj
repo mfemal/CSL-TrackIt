@@ -76,7 +76,7 @@
     <Compile Include="DataManager.cs" />
     <Compile Include="GameEntityBuildingExtension.cs" />
     <Compile Include="GameEntityDataExtractor.cs" />
-    <Compile Include="GameEntityThreadingExtension.cs" />
+    <Compile Include="ExpungeThreadingExtension.cs" />
     <Compile Include="Localization.cs" />
     <Compile Include="LogUtil.cs" />
     <Compile Include="ModInfo.cs" />
