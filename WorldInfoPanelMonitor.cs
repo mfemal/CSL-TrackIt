@@ -6,6 +6,10 @@ using TrackIt.API;
 
 namespace TrackIt
 {
+    /// <summary>
+    /// Unity behaviour to handle initial display and updates for the companion window WorldInfoPanel.
+    /// </summary>
+    /// <seealso cref="WorldInfoPanel" />
     public class WorldInfoPanelMonitor : MonoBehaviour
     {
         private const string _namePrefix = "WorldInfoPanel";

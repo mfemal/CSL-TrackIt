@@ -8,8 +8,9 @@ using TrackIt.API;
 namespace TrackIt
 {
     /// <summary>
-    /// Unity behaviour to handle intial display and updates for the companion window for CityServiceVehicleWorldInfoPanel.
+    /// Unity behaviour to handle initial display and updates for the companion window CityServiceVehicleWorldInfoPanel.
     /// </summary>
+    /// <seealso cref="CityServiceVehicleWorldInfoPanel" />
     public class VehicleWorldInfoPanelMonitor : MonoBehaviour
     {
         internal struct TrackingRow
