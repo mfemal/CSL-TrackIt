@@ -9,6 +9,7 @@
         /// Infer a category of data based on its resource type.
         /// </summary>
         /// <param name="resourceType">Resource type for conversion. These must be kept in-sync with the category options.</param>
+        /// <seealso cref="ColossalFramework.CommonBuildingAI.ExportResource(ushort, Building, TransferReason, int)" />
         /// <returns>Resource category determined from resourceType, default set to 'None'.</returns>
         public static ResourceCategoryType InferResourceCategoryType(this ResourceType resourceType)
         {
@@ -34,7 +35,6 @@
                     resourceCategoryType = ResourceCategoryType.Agriculture;
                     break;
                 case ResourceType.Goods:
-                case ResourceType.Coal:
                 case ResourceType.LuxuryProducts:
                     resourceCategoryType = ResourceCategoryType.Goods;
                     break;
@@ -46,6 +46,7 @@
                     resourceCategoryType = ResourceCategoryType.Mail;
                     break;
                 case ResourceType.Ore:
+                case ResourceType.Coal:
                 case ResourceType.Glass:
                 case ResourceType.Metals:
                     resourceCategoryType = ResourceCategoryType.Ore;
