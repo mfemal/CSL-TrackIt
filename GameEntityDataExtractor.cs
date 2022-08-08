@@ -22,18 +22,18 @@ namespace TrackIt
         /// <param name="sourceVehicleID">The source vehicle id (i.e. selected from the UI) to obtain the cargo from. Must be a valid value.</param>
         /// <param name="leadingVehicleID">Leading vehicle ID (if found).</param>
         /// <returns>The grouped list of values (sum) based on ResourceCargoType.</returns>
-        internal static IDictionary<ResourceCategoryType, uint> GetVehicleCargoBasicResourceTotals(ushort sourceVehicleID, out ushort leadingVehicleID)
+        internal static IDictionary<ResourceCategoryType, long> GetVehicleCargoBasicResourceTotals(ushort sourceVehicleID, out ushort leadingVehicleID)
         {
             IList<TrackedResource> cargoResourceList = GetVehicleCargoResources(sourceVehicleID, out leadingVehicleID);
             if (cargoResourceList.Count == 0)
             {
-                return new Dictionary<ResourceCategoryType, uint>(0);
+                return new Dictionary<ResourceCategoryType, long>(0);
             }
             IList<ResourceCategoryType> resourceCategories = UIUtils.CargoBasicResourceGroups;
-            IDictionary<ResourceCategoryType, uint> dict = new Dictionary<ResourceCategoryType, uint>();
+            IDictionary<ResourceCategoryType, long> dict = new Dictionary<ResourceCategoryType, long>();
             foreach (IGrouping<ResourceCategoryType, TrackedResource> resource in cargoResourceList.GroupBy(t => t.ResourceCategoryType))
             {
-                dict.Add(resource.Key, (uint)resource.Sum(r => r.Amount));
+                dict.Add(resource.Key, resource.Sum(r => (long)r.Amount));
             }
             return dict;
         }

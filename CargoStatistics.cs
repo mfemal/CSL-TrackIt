@@ -104,12 +104,12 @@ namespace TrackIt.API
             return cargoResourceData;
         }
 
-        public void TrackResourceSent(ResourceDestinationType resourceDestinationType, ResourceType resourceType, uint amount)
+        public void TrackResourceSent(TrackedResource trackedResource)
         {
-            CargoResourceData cargoResourceData = CreateCargoResourceData(resourceType, amount);
+            CargoResourceData cargoResourceData = CreateCargoResourceData(trackedResource.ResourceType, trackedResource.Amount);
             lock (_lockObject)
             {
-                switch (resourceDestinationType)
+                switch (trackedResource.ResourceDestinationType)
                 {
                     case ResourceDestinationType.Local:
                         _sentlocalData.Add(ref cargoResourceData);
@@ -125,12 +125,12 @@ namespace TrackIt.API
             }
         }
 
-        public void TrackResourceReceived(ResourceDestinationType resourceDestinationType, ResourceType resourceType, uint amount)
+        public void TrackResourceReceived(TrackedResource trackedResource)
         {
-            CargoResourceData cargoResourceData = CreateCargoResourceData(resourceType, amount);
+            CargoResourceData cargoResourceData = CreateCargoResourceData(trackedResource.ResourceType, trackedResource.Amount);
             lock (_lockObject)
             {
-                switch (resourceDestinationType)
+                switch (trackedResource.ResourceDestinationType)
                 {
                     case ResourceDestinationType.Local:
                         _receivedLocalData.Add(ref cargoResourceData);

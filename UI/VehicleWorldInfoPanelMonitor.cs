@@ -178,7 +178,7 @@ namespace TrackIt.UI
                 return;
             }
             ushort leadingVehicleID = 0;
-            IDictionary<ResourceCategoryType, uint> vehicleCargoCategoryTotals = GameEntityDataExtractor.GetVehicleCargoBasicResourceTotals(
+            IDictionary<ResourceCategoryType, long> vehicleCargoCategoryTotals = GameEntityDataExtractor.GetVehicleCargoBasicResourceTotals(
                 vehicleID, out leadingVehicleID);
             if (_cachedLeadingVehicleID == leadingVehicleID)
             {
@@ -186,7 +186,7 @@ namespace TrackIt.UI
             }
             if (vehicleCargoCategoryTotals.Count != 0)
             {
-                long grandTotal = vehicleCargoCategoryTotals.Values.Cast<long>().Sum();
+                long grandTotal = vehicleCargoCategoryTotals.Values.Sum();
 #if DEBUG
                 LogUtil.LogInfo($"Updating cargo based on vehicleID: {vehicleID} leadingVehicleID: {leadingVehicleID} grandTotal: {grandTotal}" + ", groups: {" +
                     vehicleCargoCategoryTotals.Select(kv => kv.Key + ": " +
@@ -194,7 +194,7 @@ namespace TrackIt.UI
 #endif
                 ResourceCategoryType resourceCategoryType;
                 TrackingRow vehicleCargoContentRow;
-                uint categoryTotal = 0;
+                long categoryTotal = 0;
                 int j = 0, a = 0; // accumulator and index to ensure category totals always add to 100 (percentage for display is range for progress bar)
                 for (int i = 0; i < UIUtils.CargoBasicResourceGroups.Count; i++)
                 {
@@ -240,7 +240,7 @@ namespace TrackIt.UI
             _cachedLeadingVehicleID = leadingVehicleID;
         }
 
-        private void UpdateProgressBar(UIProgressBar progressBar, Color color, uint amount, long total)
+        private void UpdateProgressBar(UIProgressBar progressBar, Color color, long amount, long total)
         {
             if (total > 0)
             {

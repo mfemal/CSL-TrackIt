@@ -106,7 +106,7 @@ namespace TrackIt.UI
             return total;
         }
 
-        internal long SetValues(IDictionary<ResourceCategoryType, uint> dict)
+        internal long SetValues(IDictionary<ResourceCategoryType, long> dict)
         {
             m_Slices.Clear();
 

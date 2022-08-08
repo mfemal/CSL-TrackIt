@@ -144,17 +144,16 @@ namespace TrackIt
 
             if (_trackedBuildingIndex.TryGetValue(cargoDescriptor.BuildingID, out CargoStatistics cargoStatistics))
             {
+                TrackedResource trackedResource = new TrackedResource(cargoDescriptor.ResourceDestinationType,
+                    GameEntityDataExtractor.ConvertTransferType(cargoDescriptor.TransferType),
+                    cargoDescriptor.TransferSize);
                 if (!cargoDescriptor.Incoming)
                 {
-                    cargoStatistics.TrackResourceSent(cargoDescriptor.ResourceDestinationType,
-                        GameEntityDataExtractor.ConvertTransferType(cargoDescriptor.TransferType),
-                        cargoDescriptor.TransferSize);
+                    cargoStatistics.TrackResourceSent(trackedResource);
                 }
                 else
                 {
-                    cargoStatistics.TrackResourceReceived(cargoDescriptor.ResourceDestinationType,
-                        GameEntityDataExtractor.ConvertTransferType(cargoDescriptor.TransferType),
-                        cargoDescriptor.TransferSize);
+                    cargoStatistics.TrackResourceReceived(trackedResource);
                 }
                 OnCargoBuildingChanged(cargoDescriptor.BuildingID);
 #if DEBUG
