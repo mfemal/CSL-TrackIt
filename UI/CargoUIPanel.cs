@@ -5,7 +5,7 @@ using ColossalFramework.UI;
 using UnityEngine;
 using TrackIt.API;
 
-namespace TrackIt
+namespace TrackIt.UI
 {
     class CargoUIPanel : UIPanel
     {

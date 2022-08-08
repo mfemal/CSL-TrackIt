@@ -4,7 +4,7 @@ using UnityEngine;
 using ColossalFramework.UI;
 using TrackIt.API;
 
-namespace TrackIt
+namespace TrackIt.UI
 {
     /// <summary>
     /// Unity behaviour to handle initial display and updates for the companion window WorldInfoPanel.

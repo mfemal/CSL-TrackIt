@@ -4,7 +4,7 @@ using ColossalFramework.UI;
 using UnityEngine;
 using TrackIt.API;
 
-namespace TrackIt
+namespace TrackIt.UI
 {
     /// <summary>
     /// This class extends the base Radial Chart available with functionality to wrap setters based on type of cargo.

@@ -2,7 +2,7 @@
 using ColossalFramework.UI;
 using TrackIt.API;
 
-namespace TrackIt
+namespace TrackIt.UI
 {
     /// <summary>
     /// Panel which can be used that restricts resource categories (if purchased as DLC) and constructs a legend

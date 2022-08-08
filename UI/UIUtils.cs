@@ -5,9 +5,8 @@ using ColossalFramework.Globalization;
 using ColossalFramework.UI;
 using UnityEngine;
 using TrackIt.API;
-using static TrackIt.VehicleWorldInfoPanelMonitor;
 
-namespace TrackIt
+namespace TrackIt.UI
 {
     // Some Create methods are re-used or modified from the Building Themes mod (boformer); although some credits were
     // also noted in that mod to SamSamTS and AcidFire.
