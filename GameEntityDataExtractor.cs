@@ -53,7 +53,7 @@ namespace TrackIt
             {
                 Vehicle leadingVehicle = vehicleManager.m_vehicles.m_buffer[leadingVehicleID];
                 VehicleAI vehicleAI = leadingVehicle.Info.m_vehicleAI;
-                if (vehicleAI is CargoTrainAI || vehicleAI is CargoShipAI) // vehicleAI is CarTrailerAI || vehicleAI is CargoTruckAI
+                if (vehicleAI is CargoTrainAI || vehicleAI is CargoShipAI || vehicleAI is CargoPlaneAI)
                 {
                     resourceList = new List<TrackedResource>();
                     Vehicle cargoVehicle;

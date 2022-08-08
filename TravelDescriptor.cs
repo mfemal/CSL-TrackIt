@@ -2,8 +2,9 @@
 {
     internal enum EntityType
     {
-        CargoTrain,
-        CargoShip
+        CargoPlane,
+        CargoShip,
+        CargoTrain
     }
 
     internal enum TravelStatus

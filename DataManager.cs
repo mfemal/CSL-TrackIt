@@ -172,7 +172,8 @@ namespace TrackIt
             {
                 return;
             }
-            if (travelDescriptor.EntityType == EntityType.CargoTrain || travelDescriptor.EntityType == EntityType.CargoShip)
+            if (travelDescriptor.EntityType == EntityType.CargoTrain || travelDescriptor.EntityType == EntityType.CargoShip ||
+                travelDescriptor.EntityType == EntityType.CargoPlane)
             {
                 OnCargoVehicleChanged(travelDescriptor.VehicleID);
             }
