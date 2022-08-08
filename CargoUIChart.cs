@@ -53,20 +53,45 @@ namespace TrackIt
         /// <param name="cargoStatistics">The cargo statistics determined from the index.</param>
         /// <param name="sent">Sent (true) or Received (false)</param>
         /// <param name="resourceDestinationType">The panel groups results by this value</param>
-        internal int SetValues(CargoStatistics cargoStatistics)
+        internal long SetValues(CargoStatistics cargoStatistics)
         {
             m_Slices.Clear();
 
             IList<ResourceCategoryType> standardGroups = UIUtils.CargoBasicResourceGroups;
             List<float> values = new List<float>(standardGroups.Count);
-            int total = Sent ? cargoStatistics.TotalResourcesSent(ResourceDestinationType) : cargoStatistics.TotalResourcesReceived(ResourceDestinationType);
+            CargoResourceData cargoResourceData = Sent ?
+                cargoStatistics.TotalResourcesSent(ResourceDestinationType) :
+                cargoStatistics.TotalResourcesReceived(ResourceDestinationType);
+            long total = cargoResourceData.Total();
             if (total > 0)
             {
                 for (int i = 0; i < standardGroups.Count; i++)
                 {
-                    int categoryTotal = Sent ?
-                            cargoStatistics.TotalResourcesSent(standardGroups[i], ResourceDestinationType) :
-                            cargoStatistics.TotalResourcesReceived(standardGroups[i], ResourceDestinationType);
+                    uint categoryTotal = 0;
+                    switch (standardGroups[i])
+                    {
+                        case ResourceCategoryType.Agriculture:
+                            categoryTotal = cargoResourceData.averageAgriculture;
+                            break;
+                        case ResourceCategoryType.Fish:
+                            categoryTotal = cargoResourceData.averageFish;
+                            break;
+                        case ResourceCategoryType.Forestry:
+                            categoryTotal = cargoResourceData.averageForestry;
+                            break;
+                        case ResourceCategoryType.Goods:
+                            categoryTotal = cargoResourceData.averageGoods;
+                            break;
+                        case ResourceCategoryType.Mail:
+                            categoryTotal = cargoResourceData.averageMail;
+                            break;
+                        case ResourceCategoryType.Oil:
+                            categoryTotal = cargoResourceData.averageOil;
+                            break;
+                        case ResourceCategoryType.Ore:
+                            categoryTotal = cargoResourceData.averageOre;
+                            break;
+                    }
                     if (categoryTotal == 0)
                     {
                         continue;
@@ -81,13 +106,13 @@ namespace TrackIt
             return total;
         }
 
-        internal int SetValues(IDictionary<ResourceCategoryType, int> dict)
+        internal long SetValues(IDictionary<ResourceCategoryType, uint> dict)
         {
             m_Slices.Clear();
 
             IList<ResourceCategoryType> standardGroups = UIUtils.CargoBasicResourceGroups;
             List<float> values = new List<float>(standardGroups.Count);
-            int total = dict.Select(kv => kv.Value).ToList().Sum();
+            long total = dict.Select(kv => kv.Value).ToList().Cast<long>().Sum();
             if (total > 0)
             {
                 for (int i = 0; i < standardGroups.Count; i++)
@@ -127,7 +152,7 @@ namespace TrackIt
         /// Show a localized value for either the tooltip (default) or within the TotalLabel (if set)
         /// </summary>
         /// <param name="total">Value calculated for the total.</param>
-        private void UpdateTotalText(int total)
+        private void UpdateTotalText(long total)
         {
             if (TotalLabel != null)
             {

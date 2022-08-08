@@ -172,7 +172,7 @@ namespace TrackIt
         /// </summary>
         /// <param name="v">Source value (in raw units) for formatting.</param>
         /// <returns>Formatted string suitable for display.</returns>
-        public static string FormatCargoValue(int v)
+        public static string FormatCargoValue(long v)
         {
             return v > 0 && v < 1000 ?
                 string.Format("{0:0.000#}{1}", v / 1000.0f, Localization.Get("KILO_UNITS")) :

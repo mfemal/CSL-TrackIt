@@ -68,6 +68,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CargoResourceData.cs" />
+    <Compile Include="CargoStatistics.cs" />
     <Compile Include="CargoUILegend.cs" />
     <Compile Include="TravelDescriptor.cs" />
     <Compile Include="WorldInfoPanelMonitor.cs" />

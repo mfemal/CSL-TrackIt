@@ -21,18 +21,18 @@ namespace TrackIt
         /// <param name="sourceVehicleID">The source vehicle id (i.e. selected from the UI) to obtain the cargo from. Must be a valid value.</param>
         /// <param name="leadingVehicleID">Leading vehicle ID (if found).</param>
         /// <returns>The grouped list of values (sum) based on ResourceCargoType.</returns>
-        internal static IDictionary<ResourceCategoryType, int> GetVehicleCargoBasicResourceTotals(ushort sourceVehicleID, out ushort leadingVehicleID)
+        internal static IDictionary<ResourceCategoryType, uint> GetVehicleCargoBasicResourceTotals(ushort sourceVehicleID, out ushort leadingVehicleID)
         {
             IList<TrackedResource> cargoResourceList = GetVehicleCargoResources(sourceVehicleID, out leadingVehicleID);
             if (cargoResourceList.Count == 0)
             {
-                return new Dictionary<ResourceCategoryType, int>(0);
+                return new Dictionary<ResourceCategoryType, uint>(0);
             }
             IList<ResourceCategoryType> resourceCategories = UIUtils.CargoBasicResourceGroups;
-            IDictionary<ResourceCategoryType, int> dict = new Dictionary<ResourceCategoryType, int>();
+            IDictionary<ResourceCategoryType, uint> dict = new Dictionary<ResourceCategoryType, uint>();
             foreach (IGrouping<ResourceCategoryType, TrackedResource> resource in cargoResourceList.GroupBy(t => t.ResourceCategoryType))
             {
-                dict.Add(resource.Key, resource.Sum(r => r.Amount));
+                dict.Add(resource.Key, (uint)resource.Sum(r => r.Amount));
             }
             return dict;
         }
@@ -57,12 +57,10 @@ namespace TrackIt
                     resourceList = new List<TrackedResource>();
                     Vehicle cargoVehicle;
                     ushort c = leadingVehicle.m_firstCargo;
-                    DateTime now = Singleton<SimulationManager>.instance.m_currentGameTime;
                     while (c != 0)
                     {
                         cargoVehicle = vehicleManager.m_vehicles.m_buffer[c];
-                        resourceList.Add(new TrackedResource(now,
-                            ResourceDestinationType.Local,
+                        resourceList.Add(new TrackedResource(ResourceDestinationType.Local,
                             ConvertTransferType(cargoVehicle.m_transferType),
                             cargoVehicle.m_transferSize));
                         c = DataManager.instance.IsVehicleIDInRange(cargoVehicle.m_nextCargo) ? cargoVehicle.m_nextCargo : (ushort)0;

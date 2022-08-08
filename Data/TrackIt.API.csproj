@@ -41,7 +41,6 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CargoStatistics.cs" />
     <Compile Include="CargoExtensions.cs" />
     <Compile Include="MonitoredDataChanged.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

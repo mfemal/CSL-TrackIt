@@ -110,9 +110,9 @@ namespace TrackIt
             CargoStatistics cargoStatistics;
             foreach (ushort buildingID in _trackedBuildingIndex.Keys)
             {
-                if (_trackedBuildingIndex.TryGetValue(buildingID, out cargoStatistics) &&
-                    (cargoStatistics.ExpungeOlderThan(oldestAllowedDate) > 0))
+                if (_trackedBuildingIndex.TryGetValue(buildingID, out cargoStatistics))
                 {
+                    cargoStatistics.Update();
                     OnCargoBuildingChanged(buildingID);
                 }
             }
@@ -144,18 +144,15 @@ namespace TrackIt
 
             if (_trackedBuildingIndex.TryGetValue(cargoDescriptor.BuildingID, out CargoStatistics cargoStatistics))
             {
-                DateTime ts = Singleton<SimulationManager>.instance.m_currentGameTime.Date; // Ignore the time component
                 if (!cargoDescriptor.Incoming)
                 {
-                    cargoStatistics.TrackResourceSent(ts,
-                        cargoDescriptor.ResourceDestinationType,
+                    cargoStatistics.TrackResourceSent(cargoDescriptor.ResourceDestinationType,
                         GameEntityDataExtractor.ConvertTransferType(cargoDescriptor.TransferType),
                         cargoDescriptor.TransferSize);
                 }
                 else
                 {
-                    cargoStatistics.TrackResourceReceived(ts,
-                        cargoDescriptor.ResourceDestinationType,
+                    cargoStatistics.TrackResourceReceived(cargoDescriptor.ResourceDestinationType,
                         GameEntityDataExtractor.ConvertTransferType(cargoDescriptor.TransferType),
                         cargoDescriptor.TransferSize);
                 }

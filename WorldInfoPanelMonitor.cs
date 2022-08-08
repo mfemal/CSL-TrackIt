@@ -184,12 +184,12 @@ namespace TrackIt
                 sb.AppendFormat(
                     "{0}: {1:0}",
                     Localization.Get("TRUCKS_RCVD"),
-                    cargoStatistics.CountResourcesReceived());
+                    cargoStatistics.TrucksUnloadedCount);
                 sb.AppendLine();
                 sb.AppendFormat(
                     "{0}: {1:0}",
                     Localization.Get("TRUCKS_SENT"),
-                    cargoStatistics.CountResourcesSent());
+                    cargoStatistics.TrucksLoadedCount);
                 _buildingCargoLabel.text = sb.ToString();
                 _buildingCargoPanel.UpdateCargoValues(cargoStatistics);
                 SetBuildingCargoVisible(true);
