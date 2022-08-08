@@ -91,7 +91,7 @@
     <Compile Include="VehicleWorldInfoPanelMonitor.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Data\TrackIt.API.csproj">
+    <ProjectReference Include="API\TrackIt.API.csproj">
       <Project>{D8974DAD-031E-4B97-8EF3-C9D3C3B36115}</Project>
       <Name>TrackIt.API</Name>
     </ProjectReference>
