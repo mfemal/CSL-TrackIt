@@ -45,7 +45,9 @@ namespace TrackIt
     }
 
     /// <summary>
-    /// Overrides VehicleAI which does not call base class. This tracking is done after cargo is unloaded at the harbor.
+    /// Overrides PlaneAI which does not call its parent AircraftAI class. This tracking is done after cargo is unloaded.
+    /// This method may be called multiple times while a plane is on the taxiway to unload. Upon arrival, the cargo
+    /// unloaded event is tracked.
     /// </summary>
     [HarmonyPatch(typeof(CargoPlaneAI), nameof(CargoPlaneAI.ArriveAtDestination))]
     [HarmonyPatch(
@@ -53,12 +55,95 @@ namespace TrackIt
         new ArgumentType[] { ArgumentType.Normal, ArgumentType.Ref })]
     public static class CargoPlaneAIArriveAtDestinationPatch
     {
-        public static void Postfix(ushort vehicleID, ref Vehicle vehicleData)
+        public static void Prefix(ushort vehicleID, ref Vehicle vehicleData)
         {
-            DataManager.instance.TrackIt(new TravelDescriptor(vehicleID, EntityType.CargoPlane, TravelStatus.Arrive));
+            if ((vehicleData.m_flags & Vehicle.Flags.GoingBack) != 0 || // returning planes can be ignored
+                (vehicleData.m_flags & Vehicle.Flags.WaitingTarget) != 0 || // still waiting for the target to not be busy
+                (vehicleData.m_flags & Vehicle.Flags.WaitingLoading) != 0) // ensure plane has an available station
+            {
+                return;
+            }
+
+            // As long as the plane hasn't reached its destination yet, the target building hasn't switched and is set to an
+            // airplane cargo station. Only planes importing cargo are tracked.
+            ushort buildingID = vehicleData.m_targetBuilding;
+            if (buildingID != 0 &&
+                vehicleData.m_transferSize > 0 &&
+                (vehicleData.m_flags & Vehicle.Flags.Importing) != 0 && // plane can switch from import to export in Postfix
+                (vehicleData.m_sourceBuilding != vehicleData.m_targetBuilding))
+            {
 #if DEBUG_PLANE
-            LogUtil.LogInfo($"CargoPlaneAI ArriveAtDestination Postfix vehicleID: {vehicleID}");
+                LogUtil.LogInfo($"CargoPlaneAI ArriveAtDestination Prefix vehicleID: {vehicleID}");
 #endif
+                DataManager.instance.TrackIt(new TravelDescriptor(vehicleID, TravelVehicleType.CargoPlane, TravelStatus.Arrival, buildingID));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Track outbound cargo resource transfers in CargoPlaneAI.
+    /// </summary>
+    [HarmonyPatch(typeof(CargoPlaneAI), nameof(CargoPlaneAI.SetTarget))]
+    [HarmonyPatch(
+        new Type[] { typeof(ushort), typeof(Vehicle), typeof(ushort) },
+        new ArgumentType[] { ArgumentType.Normal, ArgumentType.Ref, ArgumentType.Normal })]
+    public static class CargoPlaneAISetTargetPatch
+    {
+        private static ushort lastTargetBuildingID; // used in Postfix
+
+        public static void Prefix(ushort vehicleID, ref Vehicle data, ushort targetBuilding)
+        {
+            ushort sourceBuilding = data.m_sourceBuilding;
+            BuildingInfo buildingInfo = Singleton<BuildingManager>.instance.m_buildings.m_buffer[sourceBuilding].Info;
+            if (buildingInfo.m_buildingAI is OutsideConnectionAI && targetBuilding != data.m_targetBuilding)
+            {
+                lastTargetBuildingID = data.m_targetBuilding;
+            }
+        }
+
+        /// <summary>
+        /// Called by the game engine in <see cref="CargoPlaneAI.SimulationStep(ushort, Vehicle3, Vector3)" /> when cargo
+        /// is transferred. A building must have Building.Flags.Active, the vehicle must not have Vehicle.Flags.GoingBack
+        /// and the target building is not set already. Unfortunately, this method is also called from other locations so
+        /// it needs to screen out other occurrences.
+        /// </summary>
+        /// <param name="vehicleID">Vehicle ID.</param>
+        /// <param name="data">Vehicle data.</param>
+        /// <param name="targetBuilding">Source building ID for the transfer.</param>
+        public static void Postfix(ushort vehicleID, ref Vehicle data, ushort targetBuilding)
+        {
+            ushort sourceBuilding = data.m_sourceBuilding;
+            BuildingInfo buildingInfo = Singleton<BuildingManager>.instance.m_buildings.m_buffer[sourceBuilding].Info;
+
+            if (buildingInfo.m_buildingAI is OutsideConnectionAI)
+            {
+                if (lastTargetBuildingID == 0) // honor checks in Prefix
+                {
+                    return;
+                }
+                // Planes owned by external cities have external m_sourceBuilding IDs; so if a plane that previously did an import
+                // is now returning, take the last target building from Prefix (before it is changed and not available in Postfix)
+                // to use for the source building to track the transfer for.
+                sourceBuilding = lastTargetBuildingID;
+                lastTargetBuildingID = 0;
+
+                if (Singleton<VehicleManager>.instance.m_vehicles.m_buffer[vehicleID].m_firstCargo == 0) // Ensure there is cargo transferred
+                {
+                    return;
+                }
+            }
+
+            if ((data.m_flags & Vehicle.Flags.Exporting) != 0 &&
+                (data.m_flags & Vehicle.Flags.WaitingTarget) == 0 &&
+                (targetBuilding != 0) &&
+                (data.m_transferSize > 0) &&
+                targetBuilding != sourceBuilding)
+            {
+#if DEBUG_PLANE
+                LogUtil.LogInfo($"CargoPlaneAI SetTarget Postfix vehicleID: {vehicleID} sourceBuilding: {sourceBuilding} targetBuilding: {targetBuilding} size: {data.m_transferSize}");
+#endif
+                DataManager.instance.TrackIt(new TravelDescriptor(vehicleID, TravelVehicleType.CargoPlane, TravelStatus.Departure, sourceBuilding));
+            }
         }
     }
 
@@ -71,9 +156,19 @@ namespace TrackIt
         new ArgumentType[] { ArgumentType.Normal, ArgumentType.Ref })]
     public static class CargoShipAIArriveAtDestinationPatch
     {
+        public static ushort buildingID;
+
+        public static void Prefix(ushort vehicleID, ref Vehicle vehicleData)
+        {
+            buildingID = vehicleData.m_targetBuilding;
+#if DEBUG_SHIP
+            LogUtil.LogInfo($"CargoShipAI ArriveAtDestination Prefix vehicleID: {vehicleID}");
+#endif
+        }
+
         public static void Postfix(ushort vehicleID, ref Vehicle vehicleData)
         {
-            DataManager.instance.TrackIt(new TravelDescriptor(vehicleID, EntityType.CargoShip, TravelStatus.Arrive));
+            DataManager.instance.TrackIt(new TravelDescriptor(vehicleID, TravelVehicleType.CargoShip, TravelStatus.Arrival, buildingID));
 #if DEBUG_SHIP
             LogUtil.LogInfo($"CargoShipAI ArriveAtDestination Postfix vehicleID: {vehicleID}");
 #endif
@@ -89,9 +184,19 @@ namespace TrackIt
         new ArgumentType[] { ArgumentType.Normal, ArgumentType.Ref })]
     public static class CargoTrainAIArriveAtDestinationPatch
     {
+        public static ushort buildingID;
+
+        public static void Prefix(ushort vehicleID, ref Vehicle vehicleData)
+        {
+            buildingID = vehicleData.m_targetBuilding;
+#if DEBUG_TRAIN
+            LogUtil.LogInfo($"CargoTrainAI ArriveAtDestination Prefix vehicleID: {vehicleID}");
+#endif
+        }
+
         public static void Postfix(ushort vehicleID, ref Vehicle vehicleData)
         {
-            DataManager.instance.TrackIt(new TravelDescriptor(vehicleID, EntityType.CargoTrain, TravelStatus.Arrive));
+            DataManager.instance.TrackIt(new TravelDescriptor(vehicleID, TravelVehicleType.CargoTrain, TravelStatus.Arrival, buildingID));
 #if DEBUG_TRAIN
             LogUtil.LogInfo($"CargoTrainAI ArriveAtDestination Postfix vehicleID: {vehicleID}");
 #endif
@@ -99,18 +204,51 @@ namespace TrackIt
     }
 
     /// <summary>
-    /// Via Harmony, track outbound (sent) cargo resource transfers in the CargoTruckAI.
+    /// Track outbound (sent) mail cargo resource transfers in PostVanAI. Currently,
+    /// <see cref="PostVanAI.ChangeVehicleType(VehicleInfo, ushort, Vehicle, PathUnit.Position, uint)" />
+    /// uses CargoTruckAI.ChangeVehicleType. So this patch handles transfers such as planes arriving
+    /// that import mail along with any Post Office that may process mail.
     /// </summary>
-    [HarmonyPatch(typeof(CargoTruckAI), nameof(CargoTruckAI.SetSource))]
-    public static class CargoTruckAISetSourcePatch
+    [HarmonyPatch(typeof(PostVanAI), nameof(PostVanAI.SetSource))]
+    [HarmonyPatch(
+        new Type[] { typeof(ushort), typeof(Vehicle), typeof(ushort) },
+        new ArgumentType[] { ArgumentType.Normal, ArgumentType.Ref, ArgumentType.Normal })]
+    public static class PostVanAISetSourcePatch
     {
-
         /// <summary>
         /// Called after the source is set by the game engine when cargo is transferred.
         /// </summary>
         /// <param name="vehicleID">Vehicle ID.</param>
-        /// <param name="data">Vehicle data.</param>
-        /// <param name="sourceBuilding">Source building ID for the transfer.</param>
+        /// <param name="data">Vehicle data of the details of the transfer.</param>
+        /// <param name="sourceBuilding">Source building ID for the transfer (i.e. Cargo Aircraft Stand, Post Office, etc.).</param>
+        public static void Postfix(ushort vehicleID, ref Vehicle data, ushort sourceBuilding)
+        {
+            DataManager.instance.TrackIt(new CargoDescriptor(sourceBuilding,
+                false,
+                data.m_transferType,
+                data.m_transferSize,
+                data.m_flags));
+#if DEBUG_TRUCK
+            LogUtil.LogInfo($"PostVanAI SetSource Postfix vehicleID: {vehicleID} sourceBuilding: {sourceBuilding}");
+#endif
+        }
+    }
+
+    /// <summary>
+    /// Track outbound (sent) truck cargo resource transfers in CargoTruckAI.
+    /// </summary>
+    [HarmonyPatch(typeof(CargoTruckAI), nameof(CargoTruckAI.SetSource))]
+    [HarmonyPatch(
+        new Type[] { typeof(ushort), typeof(Vehicle), typeof(ushort) },
+        new ArgumentType[] { ArgumentType.Normal, ArgumentType.Ref, ArgumentType.Normal })]
+    public static class CargoTruckAISetSourcePatch
+    {
+        /// <summary>
+        /// Called after the source is set by the game engine when cargo is transferred.
+        /// </summary>
+        /// <param name="vehicleID">Vehicle ID.</param>
+        /// <param name="data">Vehicle data of the details of the transfer.</param>
+        /// <param name="sourceBuilding">Source building ID for the transfer (i.e. Cargo Aircraft Stand, Cargo Train Station, etc.).</param>
         public static void Postfix(ushort vehicleID, ref Vehicle data, ushort sourceBuilding)
         {
             DataManager.instance.TrackIt(new CargoDescriptor(sourceBuilding,
@@ -147,19 +285,18 @@ namespace TrackIt
         /// <param name="laneID">The lane ID.</param>
         public static void Prefix(ref VehicleInfo vehicleInfo, ushort vehicleID, ref Vehicle vehicleData, PathUnit.Position pathPos, uint laneID)
         {
-            ushort buildingID = 0;
             if ((vehicleData.m_flags & (Vehicle.Flags.TransferToSource | Vehicle.Flags.GoingBack)) == 0)
             {
                 Vector3 vector = NetManager.instance.m_lanes.m_buffer[laneID].CalculatePosition(0.5f);
                 NetInfo info = NetManager.instance.m_segments.m_buffer[pathPos.m_segment].Info;
-                buildingID = Singleton<BuildingManager>.instance.FindBuilding(vector,
+                ushort buildingID = Singleton<BuildingManager>.instance.FindBuilding(vector,
                     100f, /* maxDistance */
                     info.m_class.m_service,
                     ItemClass.SubService.None,
                     Building.Flags.None, /* required */
                     Building.Flags.None); /* forbidden */
+                s_cargoDescriptor = new CargoDescriptor(buildingID, true, vehicleData.m_transferType, vehicleData.m_transferSize, vehicleData.m_flags);
             }
-            s_cargoDescriptor = new CargoDescriptor(buildingID, true, vehicleData.m_transferType, vehicleData.m_transferSize, vehicleData.m_flags);
         }
 
         /// <summary>
