@@ -1,6 +1,6 @@
 ﻿namespace TrackIt
 {
-    internal enum EntityType
+    internal enum TravelVehicleType
     {
         CargoPlane,
         CargoShip,
@@ -9,19 +9,25 @@
 
     internal enum TravelStatus
     {
-        Arrive,
-        Depart
+        Arrival,
+        Departure
     }
 
     internal struct TravelDescriptor
     {
+        internal ushort BuildingID
+        {
+            get;
+            private set;
+        }
+
         internal ushort VehicleID
         {
             get;
             private set;
         }
 
-        internal EntityType EntityType
+        internal TravelVehicleType TravelVehicleType
         {
             get;
             private set;
@@ -33,11 +39,12 @@
             private set;
         }
 
-        internal TravelDescriptor(ushort vehicleID, EntityType entityType, TravelStatus travelStatus)
+        internal TravelDescriptor(ushort vehicleID, TravelVehicleType travelVehicleType, TravelStatus travelStatus, ushort buildingID)
         {
             VehicleID = vehicleID;
-            EntityType = entityType;
+            TravelVehicleType = travelVehicleType;
             TravelStatus = travelStatus;
+            BuildingID = buildingID;
         }
     }
 }

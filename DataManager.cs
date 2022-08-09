@@ -172,10 +172,26 @@ namespace TrackIt
             {
                 return;
             }
-            if (travelDescriptor.EntityType == EntityType.CargoTrain || travelDescriptor.EntityType == EntityType.CargoShip ||
-                travelDescriptor.EntityType == EntityType.CargoPlane)
+
+            if (travelDescriptor.TravelVehicleType == TravelVehicleType.CargoTrain ||
+                travelDescriptor.TravelVehicleType == TravelVehicleType.CargoShip ||
+                travelDescriptor.TravelVehicleType == TravelVehicleType.CargoPlane)
             {
-                OnCargoVehicleChanged(travelDescriptor.VehicleID);
+                if (TryGetBuilding(travelDescriptor.BuildingID, out CargoStatistics cargoStatistics))
+                {
+                    if (travelDescriptor.TravelStatus == TravelStatus.Arrival)
+                    {
+                        cargoStatistics.TrackArrival(travelDescriptor.TravelVehicleType);
+                        OnCargoBuildingChanged(travelDescriptor.BuildingID);
+                    }
+                    else if (travelDescriptor.TravelStatus == TravelStatus.Departure)
+                    {
+                        cargoStatistics.TrackDeparture(travelDescriptor.TravelVehicleType);
+                        OnCargoBuildingChanged(travelDescriptor.BuildingID);
+                    }
+
+                    OnCargoVehicleChanged(travelDescriptor.VehicleID);
+                }
             }
         }
 

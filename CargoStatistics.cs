@@ -48,6 +48,18 @@ namespace TrackIt.API
             private set;
         }
 
+        public uint ShipsLoadedCount
+        {
+            get;
+            private set;
+        }
+
+        public uint ShipsUnloadedCount
+        {
+            get;
+            private set;
+        }
+
         private CargoResourceData _sentlocalData;
         private CargoResourceData _receivedLocalData;
         private CargoResourceData _sentImportData;
@@ -149,6 +161,9 @@ namespace TrackIt.API
         public override string ToString()
         {
             return new StringBuilder()
+                .Append($"Planes Loaded: {PlanesLoadedCount}, Unloaded: {PlanesUnloadedCount}, ")
+                .Append($"Ships Loaded: {ShipsLoadedCount}, Unloaded: {ShipsUnloadedCount}, ")
+                .Append($"Trains Loaded: {TrainsLoadedCount}, Unloaded: {TrainsUnloadedCount}, ")
                 .Append($"Trucks Loaded: {TrucksLoadedCount}, Unloaded: {TrucksUnloadedCount}, ")
                 .Append("Totals: [")
                 .AppendFormat("Local: (Sent: {0}, Received {1}), ", _sentlocalData, _receivedLocalData)
@@ -156,6 +171,44 @@ namespace TrackIt.API
                 .AppendFormat("Export: (Sent: {0}, Received: {1})", _sentExportData, _receivedExportData)
                 .Append("]")
                 .ToString();
+        }
+
+        internal void TrackArrival(TravelVehicleType travelVehicleType)
+        {
+            lock (_lockObject)
+            {
+                switch (travelVehicleType)
+                {
+                    case TravelVehicleType.CargoPlane:
+                        PlanesUnloadedCount++;
+                        break;
+                    case TravelVehicleType.CargoShip:
+                        ShipsUnloadedCount++;
+                        break;
+                    case TravelVehicleType.CargoTrain:
+                        TrainsUnloadedCount++;
+                        break;
+                }
+            }
+        }
+
+        internal void TrackDeparture(TravelVehicleType travelVehicleType)
+        {
+            lock (_lockObject)
+            {
+                switch (travelVehicleType)
+                {
+                    case TravelVehicleType.CargoPlane:
+                        PlanesLoadedCount++;
+                        break;
+                    case TravelVehicleType.CargoShip:
+                        ShipsLoadedCount++;
+                        break;
+                    case TravelVehicleType.CargoTrain:
+                        TrainsLoadedCount++;
+                        break;
+                }
+            }
         }
 
         internal void Update()
