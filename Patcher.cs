@@ -148,7 +148,8 @@ namespace TrackIt
     }
 
     /// <summary>
-    /// Overrides VehicleAI which does not call base class. This tracking is done after cargo is unloaded at the harbor.
+    /// Patched source method overrides ShipAI and does not call base class. This tracking is done after cargo is unloaded at
+    /// the harbor which may involve waiting for it to become free (method called multiple times for the same vehicle).
     /// </summary>
     [HarmonyPatch(typeof(CargoShipAI), nameof(CargoShipAI.ArriveAtDestination))]
     [HarmonyPatch(
@@ -156,27 +157,29 @@ namespace TrackIt
         new ArgumentType[] { ArgumentType.Normal, ArgumentType.Ref })]
     public static class CargoShipAIArriveAtDestinationPatch
     {
-        public static ushort buildingID;
-
         public static void Prefix(ushort vehicleID, ref Vehicle vehicleData)
         {
-            buildingID = vehicleData.m_targetBuilding;
-#if DEBUG_SHIP
-            LogUtil.LogInfo($"CargoShipAI ArriveAtDestination Prefix vehicleID: {vehicleID}");
-#endif
-        }
+            if ((vehicleData.m_flags & Vehicle.Flags.GoingBack) != 0 || // returning ships can be ignored (normally despawned)
+                (vehicleData.m_flags & Vehicle.Flags.WaitingTarget) != 0 || // still waiting for the harbor to not be busy
+                (vehicleData.m_flags & Vehicle.Flags.WaitingLoading) != 0) // ensure ship is unloaded
+            {
+                return;
+            }
 
-        public static void Postfix(ushort vehicleID, ref Vehicle vehicleData)
-        {
-            DataManager.instance.TrackIt(new TravelDescriptor(vehicleID, TravelVehicleType.CargoShip, TravelStatus.Arrival, buildingID));
+            ushort buildingID = vehicleData.m_targetBuilding;
+            if (buildingID != 0 && vehicleData.m_transferSize > 0)
+            {
+                DataManager.instance.TrackIt(new TravelDescriptor(vehicleID, TravelVehicleType.CargoShip, TravelStatus.Arrival, buildingID));
 #if DEBUG_SHIP
-            LogUtil.LogInfo($"CargoShipAI ArriveAtDestination Postfix vehicleID: {vehicleID}");
+                LogUtil.LogInfo($"CargoShipAI ArriveAtDestination Prefix vehicleID: {vehicleID} buildingID: {buildingID}");
 #endif
+            }
         }
     }
 
     /// <summary>
-    /// Overrides VehicleAI which does not call base class. This tracking is done after cargo is unloaded at the train station.
+    /// Patched source method overrides TrainAI and does not call base class. This tracking is done after cargo is unloaded at
+    /// the train station which may involve waiting for it to become free (method called multiple times for the same vehicle).
     /// </summary>
     [HarmonyPatch(typeof(CargoTrainAI), nameof(CargoTrainAI.ArriveAtDestination))]
     [HarmonyPatch(
@@ -184,22 +187,24 @@ namespace TrackIt
         new ArgumentType[] { ArgumentType.Normal, ArgumentType.Ref })]
     public static class CargoTrainAIArriveAtDestinationPatch
     {
-        public static ushort buildingID;
-
         public static void Prefix(ushort vehicleID, ref Vehicle vehicleData)
         {
-            buildingID = vehicleData.m_targetBuilding;
+            if ((vehicleData.m_flags & Vehicle.Flags.GoingBack) != 0 || // returning trains can be ignored (normally despawned)
+                (vehicleData.m_flags & Vehicle.Flags.WaitingTarget) != 0 || // still waiting for the train station to not be busy
+                (vehicleData.m_flags & Vehicle.Flags.WaitingLoading) != 0) // ensure train is unloaded
+            {
+                return;
+            }
+            // As long as the plane hasn't reached its destination yet, the target building hasn't switched and is set to an
+            // airplane cargo station. Only planes importing cargo are tracked.
+            ushort buildingID = vehicleData.m_targetBuilding;
+            if (buildingID != 0 && vehicleData.m_transferSize > 0)
+            {
+                DataManager.instance.TrackIt(new TravelDescriptor(vehicleID, TravelVehicleType.CargoTrain, TravelStatus.Arrival, buildingID));
 #if DEBUG_TRAIN
-            LogUtil.LogInfo($"CargoTrainAI ArriveAtDestination Prefix vehicleID: {vehicleID}");
+                LogUtil.LogInfo($"CargoTrainAI ArriveAtDestination Prefix vehicleID: {vehicleID} buildingID: {buildingID}");
 #endif
-        }
-
-        public static void Postfix(ushort vehicleID, ref Vehicle vehicleData)
-        {
-            DataManager.instance.TrackIt(new TravelDescriptor(vehicleID, TravelVehicleType.CargoTrain, TravelStatus.Arrival, buildingID));
-#if DEBUG_TRAIN
-            LogUtil.LogInfo($"CargoTrainAI ArriveAtDestination Postfix vehicleID: {vehicleID}");
-#endif
+            }
         }
     }
 
