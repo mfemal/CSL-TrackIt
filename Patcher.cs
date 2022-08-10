@@ -45,6 +45,54 @@ namespace TrackIt
     }
 
     /// <summary>
+    /// Cargo may be held (after dropoff) at an Aircraft Cargo Station rather than reusing an existing plane or route right away.
+    /// Thus, when the simulation runs and this cargo needs to be transferred, a new plane is created. The TrySpawn source method
+    /// is currently not overridden in CargoPlaneAI and must be tracked in its parent class, AircraftAI. This check is purposely
+    /// left general to further screen the data to be tracked later (i.e. screening departures based on the type of
+    /// plane, handling originations from outside connections or city cargo stations, etc.)
+    /// </summary>
+    [HarmonyPatch(typeof(AircraftAI), nameof(AircraftAI.TrySpawn))]
+    [HarmonyPatch(
+        new Type[] { typeof(ushort), typeof(Vehicle) },
+        new ArgumentType[] { ArgumentType.Normal, ArgumentType.Ref })]
+    public static class AircraftAITrySpawnPatch
+    {
+        private static bool prefixSpawnedGuard;
+
+        public static void Prefix(ushort vehicleID, ref Vehicle vehicleData)
+        {
+            // Vehicle may spawn, and despawn, so as long as this flag is set and TrySpawn is called multiple times this should
+            // protect against tracking errors (game engine calls the source method multiple times and may not actually spawn
+            // the plane based on the state changes that occur with these flags)
+            prefixSpawnedGuard = (vehicleData.m_flags & Vehicle.Flags.Spawned) != 0;
+        }
+
+        public static void Postfix(bool __result, ushort vehicleID, ref Vehicle vehicleData)
+        {
+            // TrySpawn does have a guard on Vehicle.Flags.Spawned already (so __result may be forced true). So replicate the check
+            // for Vehicle.Flags.WaitingSpace just to be sure the vehicle really did spawn to protect against implementation changes.
+            if (!__result ||
+                prefixSpawnedGuard ||
+                (vehicleData.m_flags & Vehicle.Flags.WaitingSpace) != 0 ||
+                (vehicleData.m_flags & Vehicle.Flags.Spawned) == 0)
+            {
+                return;
+            }
+
+            ushort sourceBuilding = vehicleData.m_sourceBuilding;
+            if ((vehicleData.m_flags & Vehicle.Flags.Spawned) != 0 &&
+                vehicleData.Info.m_vehicleAI is CargoPlaneAI &&
+                vehicleData.m_transferSize > 0)
+            {
+                DataManager.instance.TrackIt(new TravelDescriptor(vehicleID, TravelVehicleType.CargoPlane, TravelStatus.Departure, sourceBuilding));
+#if DEBUG
+                LogUtil.LogWarning($"AircraftAI TrySpawn Postfix vehicleID: {vehicleID} sourceBuilding: {sourceBuilding}");
+#endif
+            }
+        }
+    }
+
+    /// <summary>
     /// Overrides PlaneAI which does not call its parent AircraftAI class. This tracking is done after cargo is unloaded.
     /// This method may be called multiple times while a plane is on the taxiway to unload. Upon arrival, the cargo
     /// unloaded event is tracked.
